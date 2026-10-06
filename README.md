@@ -16,7 +16,7 @@ Open the local URL printed by Vite, then click the game to capture the mouse.
 
 ## Controls
 
-- Arrow keys: move
+- WASD or Arrow keys: move
 - Mouse movement: rotate the third-person camera
 - Space near a white chair: pick it up
 - Space while carrying a chair: throw it forward

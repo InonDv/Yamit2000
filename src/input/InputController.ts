@@ -43,7 +43,10 @@ export class InputController {
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (event.code.startsWith('Arrow') || event.code === 'Space') {
+    if (
+      event.code.startsWith('Arrow') ||
+      ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space'].includes(event.code)
+    ) {
       event.preventDefault();
     }
     if (!this.held.has(event.code)) {
