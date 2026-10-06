@@ -1,31 +1,24 @@
 import * as THREE from 'three';
 import { COLORS, CONFIG } from '../config';
 import type { InputController } from '../input/InputController';
+import { HumanFigure } from './HumanFigure';
 
 export class Player {
   readonly group = new THREE.Group();
   readonly facing = new THREE.Vector3(0, 0, -1);
   hitFlash = 0;
 
-  private readonly bodyMaterial = new THREE.MeshStandardMaterial({ color: COLORS.player });
+  private readonly figure = new HumanFigure({
+    shirtColor: COLORS.player,
+    pantsColor: 0x2563eb,
+    baseballCap: true,
+  });
+  private readonly bodyMaterial = this.figure.shirtMaterial;
   private readonly movement = new THREE.Vector3();
+  private walkPhase = 0;
 
   constructor() {
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(CONFIG.player.radius, 1.1, 5, 10),
-      this.bodyMaterial,
-    );
-    body.position.y = 1.45;
-    body.castShadow = true;
-
-    const visor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.75, 0.25, 0.18),
-      new THREE.MeshStandardMaterial({ color: 0x172554 }),
-    );
-    visor.position.set(0, 1.8, -0.62);
-    visor.castShadow = true;
-
-    this.group.add(body, visor);
+    this.group.add(this.figure.group);
     this.group.position.set(CONFIG.player.start.x, 0, CONFIG.player.start.z);
   }
 
@@ -39,6 +32,10 @@ export class Player {
       this.group.position.addScaledVector(this.movement, CONFIG.player.moveSpeed * delta);
       this.facing.lerp(this.movement, Math.min(1, delta * 14)).normalize();
       this.group.rotation.y = Math.atan2(-this.facing.x, -this.facing.z);
+      this.walkPhase += delta * 10;
+      this.figure.setWalkCycle(this.walkPhase);
+    } else {
+      this.figure.resetPose();
     }
 
     const limit = CONFIG.world.halfSize - 1;

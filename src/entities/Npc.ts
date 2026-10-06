@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { COLORS, CONFIG } from '../config';
+import { HumanFigure } from './HumanFigure';
 
 export type NpcMode = 'walking' | 'sunbathing';
 export type NpcReaction = 'calm' | 'finding-chair' | 'aiming';
@@ -11,7 +12,9 @@ export class Npc {
   reactionTimer = 0;
   hitCooldown = 0;
   private readonly target = new THREE.Vector3();
+  private readonly figure: HumanFigure;
   private readonly bodyMaterial: THREE.MeshStandardMaterial;
+  private walkPhase = Math.random() * Math.PI * 2;
 
   constructor(
     id: number,
@@ -19,23 +22,17 @@ export class Npc {
     position: THREE.Vector3,
   ) {
     this.id = `npc-${id}`;
-    this.bodyMaterial = new THREE.MeshStandardMaterial({
-      color: mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather,
+    this.figure = new HumanFigure({
+      shirtColor: mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather,
+      pantsColor: id % 2 === 0 ? 0x0f766e : 0x334155,
+      skinColor: [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
     });
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.65, 1, 4, 8), this.bodyMaterial);
-    body.castShadow = true;
-    body.position.y = mode === 'walking' ? 1.25 : 0.95;
-    if (mode === 'sunbathing') body.rotation.x = Math.PI / 2.8;
-
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.48, 12, 8),
-      new THREE.MeshStandardMaterial({ color: 0xf0b98b }),
-    );
-    head.castShadow = true;
-    head.position.set(0, mode === 'walking' ? 2.25 : 1.05, mode === 'walking' ? 0 : -0.9);
-    this.group.add(body, head);
+    this.bodyMaterial = this.figure.shirtMaterial;
+    this.group.add(this.figure.group);
 
     if (mode === 'sunbathing') {
+      this.figure.group.position.set(0, 0.68, 1.05);
+      this.figure.group.rotation.x = -Math.PI / 2;
       const lounger = new THREE.Mesh(
         new THREE.BoxGeometry(1.7, 0.18, 3.2),
         new THREE.MeshStandardMaterial({ color: 0xffffff }),
@@ -58,7 +55,10 @@ export class Npc {
       this.bodyMaterial.emissiveIntensity = 0;
     }
 
-    if (this.mode !== 'walking' || this.reaction !== 'calm') return;
+    if (this.mode !== 'walking' || this.reaction !== 'calm') {
+      if (this.mode === 'walking') this.figure.resetPose();
+      return;
+    }
     const direction = this.target.clone().sub(this.group.position);
     direction.y = 0;
     if (direction.lengthSq() < 1) {
@@ -68,6 +68,8 @@ export class Npc {
     direction.normalize();
     this.group.position.addScaledVector(direction, CONFIG.npc.walkSpeed * delta);
     this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
+    this.walkPhase += delta * 7;
+    this.figure.setWalkCycle(this.walkPhase, 0.5);
   }
 
   registerHit(): boolean {
