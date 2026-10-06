@@ -37,3 +37,7 @@ For a gameplay check:
 4. Confirm every landed chair can be picked up again.
 
 Gameplay tuning values are kept in `src/config.ts`.
+
+## Contributor
+
+- [InonDv](https://github.com/InonDv) — creator and sole contributor
