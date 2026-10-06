@@ -9,19 +9,31 @@ type SlideRider = {
   progress: number;
   speed: number;
 };
+type Swimmer = {
+  root: THREE.Group;
+  center: THREE.Vector3;
+  radiusX: number;
+  radiusZ: number;
+  phase: number;
+  speed: number;
+};
 
 export class Park {
   readonly group = new THREE.Group();
   private readonly obstacles: Obstacle[] = [];
   private readonly slideRiders: SlideRider[] = [];
+  private readonly swimmers: Swimmer[] = [];
 
   constructor() {
     this.createGround();
     this.createPool(-16, -10, 16, 11);
     this.createPool(17, 12, 12, 15);
+    this.createPool(19, -14, 10, 7);
+    this.createPool(-32, 30, 10, 7);
     this.createPaths();
     this.createFence();
     this.createSlide();
+    this.createExtraSlides();
     this.createSigns();
     this.createPalms();
   }
@@ -35,6 +47,15 @@ export class Park {
       rider.root.position.y += 0.32;
       const tangent = rider.path.getTangentAt(easedProgress).normalize();
       rider.root.quaternion.setFromUnitVectors(forward, tangent);
+    }
+    for (const swimmer of this.swimmers) {
+      swimmer.phase += delta * swimmer.speed;
+      swimmer.root.position.set(
+        swimmer.center.x + Math.cos(swimmer.phase) * swimmer.radiusX,
+        swimmer.center.y + Math.sin(swimmer.phase * 2) * 0.04,
+        swimmer.center.z + Math.sin(swimmer.phase) * swimmer.radiusZ,
+      );
+      swimmer.root.rotation.y = -swimmer.phase;
     }
   }
 
@@ -89,6 +110,8 @@ export class Park {
       minZ: z - (depth + 1.2) / 2,
       maxZ: z + (depth + 1.2) / 2,
     });
+    this.createSwimmer(x, z, width, depth, this.swimmers.length);
+    this.createSwimmer(x, z, width, depth, this.swimmers.length);
   }
 
   private createPaths(): void {
@@ -184,6 +207,52 @@ export class Park {
     this.obstacles.push({ minX: -32, maxX: -26, minZ: -25, maxZ: -19 });
   }
 
+  private createExtraSlides(): void {
+    const tower = new THREE.Vector3(29, 0, -23);
+    const supportMaterial = new THREE.MeshStandardMaterial({ color: 0x7c3aed });
+    for (const [x, z] of [
+      [-1.25, -1.25],
+      [1.25, -1.25],
+      [-1.25, 1.25],
+      [1.25, 1.25],
+    ]) {
+      const support = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.17, 0.22, 6, 10),
+        supportMaterial,
+      );
+      support.position.set(tower.x + x, 3, tower.z + z);
+      support.castShadow = true;
+      this.group.add(support);
+    }
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.1, 2.1, 0.32, 16),
+      new THREE.MeshStandardMaterial({ color: 0x22c55e }),
+    );
+    platform.position.set(tower.x, 6, tower.z);
+    platform.castShadow = true;
+    this.group.add(platform);
+
+    const greenPath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(28.3, 6.1, -21.8),
+      new THREE.Vector3(26.5, 5.2, -19.5),
+      new THREE.Vector3(25, 3.5, -17.2),
+      new THREE.Vector3(24, 1.8, -15.5),
+      new THREE.Vector3(22.5, 0.65, -14.2),
+    ]);
+    const pinkPath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(29.8, 6.1, -21.8),
+      new THREE.Vector3(32.5, 5, -19),
+      new THREE.Vector3(31, 3.2, -15.5),
+      new THREE.Vector3(27, 1.7, -13),
+      new THREE.Vector3(23, 0.65, -12.3),
+    ]);
+    this.createSlideTrack(greenPath, 0x22c55e);
+    this.createSlideTrack(pinkPath, 0xec4899);
+    this.createSlideRider(greenPath, 0.18, 0xfacc15, 3);
+    this.createSlideRider(pinkPath, 0.63, 0x06b6d4, 4);
+    this.obstacles.push({ minX: 26, maxX: 32, minZ: -26, maxZ: -20 });
+  }
+
   private createSlideTrack(path: THREE.CatmullRomCurve3, color: number): void {
     const slideMaterial = new THREE.MeshStandardMaterial({
       color,
@@ -273,6 +342,36 @@ export class Park {
       path,
       progress,
       speed: 0.1 + skinIndex * 0.012,
+    });
+  }
+
+  private createSwimmer(
+    poolX: number,
+    poolZ: number,
+    width: number,
+    depth: number,
+    index: number,
+  ): void {
+    const root = new THREE.Group();
+    const swimmer = new HumanFigure({
+      shirtColor: [0xef4444, 0xfacc15, 0x22c55e, 0x3b82f6][index % 4],
+      pantsColor: [0x1d4ed8, 0x7c3aed, 0x0f766e][index % 3],
+      skinColor: [0xffdbac, 0xc68642, 0x8d5524, 0xf0b98b][index % 4],
+      sleeveless: true,
+    });
+    swimmer.group.scale.setScalar(0.34);
+    swimmer.group.rotation.x = Math.PI / 2;
+    swimmer.group.position.z = -0.35;
+    swimmer.setWalkCycle(Math.PI / 2, 0.9);
+    root.add(swimmer.group);
+    this.group.add(root);
+    this.swimmers.push({
+      root,
+      center: new THREE.Vector3(poolX, 0.52, poolZ),
+      radiusX: width * (index % 2 === 0 ? 0.29 : 0.2),
+      radiusZ: depth * (index % 2 === 0 ? 0.18 : 0.27),
+      phase: index * 1.73,
+      speed: 0.45 + (index % 3) * 0.08,
     });
   }
 
