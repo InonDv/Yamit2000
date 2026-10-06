@@ -93,7 +93,7 @@ export class HumanFigure {
 
     if (options.backText) {
       const backLabel = this.createBackLabel(options.backText);
-      backLabel.position.set(0, 1.48, 0.255);
+      backLabel.position.set(0, 1.48, 0.28);
       this.group.add(backLabel);
     }
 
@@ -238,20 +238,26 @@ export class HumanFigure {
   private createBackLabel(text: string): THREE.Mesh {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
-    canvas.height = 160;
+    canvas.height = 320;
     const context = canvas.getContext('2d');
     if (context) {
       context.direction = 'rtl';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.font = '900 76px Arial, sans-serif';
+      context.font = '900 122px Arial, sans-serif';
       context.fillStyle = '#172554';
-      context.fillText(text, canvas.width / 2, canvas.height / 2);
+      const words = text.trim().split(/\s+/);
+      if (words.length === 2) {
+        context.fillText(words[0], canvas.width / 2, 98);
+        context.fillText(words[1], canvas.width / 2, 228);
+      } else {
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+      }
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return new THREE.Mesh(
-      new THREE.PlaneGeometry(0.82, 0.3),
+      new THREE.PlaneGeometry(0.78, 0.5),
       new THREE.MeshBasicMaterial({
         map: texture,
         transparent: true,
