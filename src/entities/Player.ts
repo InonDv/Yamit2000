@@ -18,6 +18,7 @@ export class Player {
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private walkPhase = 0;
+  private punchTimer = 0;
 
   constructor() {
     this.group.add(this.figure.group);
@@ -37,6 +38,12 @@ export class Player {
       this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
     } else {
       this.figure.resetPose();
+    }
+
+    if (this.punchTimer > 0) {
+      this.punchTimer = Math.max(0, this.punchTimer - delta);
+      const progress = 1 - this.punchTimer / CONFIG.player.punchDuration;
+      this.figure.setPunchPose(Math.sin(progress * Math.PI));
     }
 
     const limit = CONFIG.world.halfSize - 1;
@@ -61,6 +68,10 @@ export class Player {
 
   registerHit(): void {
     this.hitFlash = 0.7;
+  }
+
+  punch(): void {
+    this.punchTimer = CONFIG.player.punchDuration;
   }
 
   get aimOrigin(): THREE.Vector3 {

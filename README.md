@@ -19,6 +19,7 @@ Open the local URL printed by Vite, then click the game to capture the mouse.
 - W/S: move forward and backward
 - A/D: rotate the aim without changing position
 - Arrow keys or mouse movement: rotate the camera and the player's aim
+- Space near an NPC while empty-handed: punch
 - Space near a white chair: pick it up
 - Space while carrying a chair: throw it forward
 - Escape: release the mouse

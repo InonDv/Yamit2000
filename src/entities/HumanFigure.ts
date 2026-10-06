@@ -119,6 +119,10 @@ export class HumanFigure {
     this.setWalkCycle(0, 0);
   }
 
+  setPunchPose(amount: number): void {
+    this.rightArm.rotation.x = amount * Math.PI * 0.52;
+  }
+
   private createArm(
     limb: THREE.Group,
     x: number,

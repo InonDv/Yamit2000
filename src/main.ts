@@ -92,10 +92,14 @@ function animate(): void {
   )}%`;
 
   if (input.consumePressed('Space')) {
-    const action = chairSystem.handlePlayerAction(player);
-    if (action === 'picked-up') showMessage('Chair ready. Face an NPC and press Space!');
-    if (action === 'thrown') showMessage('Chair away!');
-    if (action === 'none') showMessage('Move closer to a white chair.');
+    if (!chairSystem.playerChair && npcSystem.punchNearest(player)) {
+      showMessage('Punch! That NPC is getting back up to retaliate.');
+    } else {
+      const action = chairSystem.handlePlayerAction(player);
+      if (action === 'picked-up') showMessage('Chair ready. Face an NPC and press Space!');
+      if (action === 'thrown') showMessage('Chair away!');
+      if (action === 'none') showMessage('Move closer to an NPC or a white chair.');
+    }
   }
 
   npcSystem.update(delta, player);

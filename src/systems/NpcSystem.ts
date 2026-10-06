@@ -72,6 +72,21 @@ export class NpcSystem {
     return this.registerAttack(npc, attackerId);
   }
 
+  punchNearest(player: Player): boolean {
+    let nearest: Npc | null = null;
+    let nearestDistance: number = CONFIG.player.punchRange;
+    for (const npc of this.npcs) {
+      const distance = npc.group.position.distanceTo(player.group.position);
+      if (distance < nearestDistance) {
+        nearest = npc;
+        nearestDistance = distance;
+      }
+    }
+    if (!nearest || !this.registerPlayerAttack(nearest)) return false;
+    player.punch();
+    return true;
+  }
+
   private registerAttack(npc: Npc, target: 'player' | string): boolean {
     const reacted = npc.registerHit();
     if (!reacted) return false;
