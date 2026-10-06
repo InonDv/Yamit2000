@@ -6,6 +6,7 @@ interface HumanFigureOptions {
   skinColor?: number;
   baseballCap?: boolean;
   sleeveless?: boolean;
+  nikeBranding?: boolean;
 }
 
 export class HumanFigure {
@@ -30,7 +31,7 @@ export class HumanFigure {
       color: options.pantsColor,
       roughness: 0.85,
     });
-    const shoeMaterial = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
+    const flipFlopMaterial = new THREE.MeshStandardMaterial({ color: 0x111827 });
 
     const torso = new THREE.Mesh(
       new THREE.CylinderGeometry(0.34, 0.42, 0.95, 14),
@@ -48,8 +49,22 @@ export class HumanFigure {
 
     this.createArm(this.leftArm, -0.49, skinMaterial, options.sleeveless ?? false);
     this.createArm(this.rightArm, 0.49, skinMaterial, options.sleeveless ?? false);
-    this.createLeg(this.leftLeg, -0.24, pantsMaterial, shoeMaterial);
-    this.createLeg(this.rightLeg, 0.24, pantsMaterial, shoeMaterial);
+    this.createLeg(
+      this.leftLeg,
+      -0.24,
+      pantsMaterial,
+      skinMaterial,
+      flipFlopMaterial,
+      options.nikeBranding ?? false,
+    );
+    this.createLeg(
+      this.rightLeg,
+      0.24,
+      pantsMaterial,
+      skinMaterial,
+      flipFlopMaterial,
+      options.nikeBranding ?? false,
+    );
 
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.18, 8), skinMaterial);
     neck.position.y = 1.94;
@@ -69,7 +84,13 @@ export class HumanFigure {
     nose.rotation.x = -Math.PI / 2;
     this.group.add(neck, head, nose);
 
-    if (options.baseballCap) this.addBaseballCap();
+    if (options.nikeBranding) {
+      const chestLogo = this.createNikeLogo(0.3, 0.12, '#111827');
+      chestLogo.position.set(0, 1.48, -0.255);
+      this.group.add(chestLogo);
+    }
+
+    if (options.baseballCap) this.addBaseballCap(options.nikeBranding ?? false);
 
     this.group.traverse((object) => {
       if (object instanceof THREE.Mesh) {
@@ -123,22 +144,47 @@ export class HumanFigure {
   private createLeg(
     limb: THREE.Group,
     x: number,
-    pantsMaterial: THREE.MeshStandardMaterial,
-    shoeMaterial: THREE.MeshStandardMaterial,
+    shortsMaterial: THREE.MeshStandardMaterial,
+    skinMaterial: THREE.MeshStandardMaterial,
+    flipFlopMaterial: THREE.MeshStandardMaterial,
+    nikeBranding: boolean,
   ): void {
     limb.position.set(x, 0.92, 0);
-    const leg = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.16, 0.14, 0.78, 8),
-      pantsMaterial,
+    const shortsLeg = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.16, 0.38, 10),
+      shortsMaterial,
     );
-    leg.position.y = -0.36;
-    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.48), shoeMaterial);
-    shoe.position.set(0, -0.81, -0.09);
-    limb.add(leg, shoe);
+    shortsLeg.position.y = -0.17;
+    const calf = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.1, 0.55, 10),
+      skinMaterial,
+    );
+    calf.position.y = -0.58;
+
+    const sole = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.07, 0.52),
+      flipFlopMaterial,
+    );
+    sole.position.set(0, -0.88, -0.08);
+    const strapGeometry = new THREE.BoxGeometry(0.055, 0.045, 0.32);
+    const leftStrap = new THREE.Mesh(strapGeometry, flipFlopMaterial);
+    leftStrap.position.set(-0.07, -0.82, -0.1);
+    leftStrap.rotation.y = -0.45;
+    const rightStrap = new THREE.Mesh(strapGeometry, flipFlopMaterial);
+    rightStrap.position.set(0.07, -0.82, -0.1);
+    rightStrap.rotation.y = 0.45;
+    limb.add(shortsLeg, calf, sole, leftStrap, rightStrap);
+
+    if (nikeBranding) {
+      const flipFlopLogo = this.createNikeLogo(0.18, 0.07, '#ffffff');
+      flipFlopLogo.position.set(0, -0.84, -0.12);
+      flipFlopLogo.rotation.x = -Math.PI / 2;
+      limb.add(flipFlopLogo);
+    }
     this.group.add(limb);
   }
 
-  private addBaseballCap(): void {
+  private addBaseballCap(nikeBranding: boolean): void {
     const capMaterial = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.75 });
     const crown = new THREE.Mesh(
       new THREE.SphereGeometry(0.385, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -149,5 +195,36 @@ export class HumanFigure {
     brim.position.set(0, 2.43, -0.35);
     brim.rotation.x = -0.08;
     this.group.add(crown, brim);
+    if (nikeBranding) {
+      const capLogo = this.createNikeLogo(0.2, 0.08, '#ffffff');
+      capLogo.position.set(0, 2.55, -0.34);
+      this.group.add(capLogo);
+    }
+  }
+
+  private createNikeLogo(width: number, height: number, color: string): THREE.Mesh {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 96;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.fillStyle = color;
+      context.beginPath();
+      context.moveTo(13, 58);
+      context.bezierCurveTo(36, 78, 63, 77, 91, 61);
+      context.lineTo(240, 13);
+      context.bezierCurveTo(184, 52, 116, 85, 70, 86);
+      context.bezierCurveTo(42, 87, 22, 77, 13, 58);
+      context.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
   }
 }

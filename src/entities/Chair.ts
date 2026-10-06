@@ -15,21 +15,46 @@ export class Chair {
   constructor(position: THREE.Vector3) {
     const material = new THREE.MeshStandardMaterial({
       color: COLORS.chair,
-      roughness: 0.65,
+      roughness: 0.48,
     });
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 1.2), material);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.16, 1.08), material);
     seat.position.y = 0.9;
-    const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.25, 0.15), material);
-    back.position.set(0, 1.5, 0.52);
-    const legGeometry = new THREE.BoxGeometry(0.13, 0.9, 0.13);
+    seat.rotation.x = -0.03;
+
+    const backZ = 0.49;
+    const backRailGeometry = new THREE.CapsuleGeometry(0.085, 0.88, 4, 8);
+    for (const x of [-0.52, 0.52]) {
+      const rail = new THREE.Mesh(backRailGeometry, material);
+      rail.position.set(x, 1.47, backZ);
+      rail.rotation.z = x * -0.08;
+      this.group.add(rail);
+    }
+    const top = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.09, 8, 20, Math.PI), material);
+    top.position.set(0, 1.83, backZ);
+    this.group.add(top);
+
+    for (const x of [-0.29, 0, 0.29]) {
+      const slat = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.63, 4, 8), material);
+      slat.position.set(x, 1.46, backZ + 0.005);
+      slat.rotation.z = x * -0.18;
+      this.group.add(slat);
+    }
+
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.18, 0.12), material);
+    apron.position.set(0, 0.81, -0.49);
+    this.group.add(apron);
+
+    const legGeometry = new THREE.BoxGeometry(0.14, 0.9, 0.16);
     for (const x of [-0.45, 0.45]) {
-      for (const z of [-0.45, 0.45]) {
+      for (const z of [-0.4, 0.4]) {
         const leg = new THREE.Mesh(legGeometry, material);
-        leg.position.set(x, 0.45, z);
+        leg.position.set(x * 1.06, 0.43, z);
+        leg.rotation.z = x > 0 ? -0.08 : 0.08;
+        leg.rotation.x = z > 0 ? 0.06 : -0.06;
         this.group.add(leg);
       }
     }
-    this.group.add(seat, back);
+    this.group.add(seat);
     this.group.traverse((object) => {
       if (object instanceof THREE.Mesh) object.castShadow = true;
     });

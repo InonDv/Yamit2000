@@ -63,6 +63,7 @@ function animate(): void {
   const delta = Math.min(clock.getDelta(), 0.05);
   previousPlayerPosition.copy(player.group.position);
   player.update(delta, input, followCamera.yaw);
+  park.update(delta);
   park.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   followCamera.update(delta, player.group.position, input);
 

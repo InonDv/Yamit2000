@@ -13,6 +13,7 @@ export class Player {
     pantsColor: 0x2563eb,
     baseballCap: true,
     sleeveless: true,
+    nikeBranding: true,
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private readonly movement = new THREE.Vector3();

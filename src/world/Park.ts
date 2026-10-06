@@ -1,11 +1,19 @@
 import * as THREE from 'three';
 import { COLORS, CONFIG } from '../config';
+import { HumanFigure } from '../entities/HumanFigure';
 
 type Obstacle = { minX: number; maxX: number; minZ: number; maxZ: number };
+type SlideRider = {
+  root: THREE.Group;
+  path: THREE.CatmullRomCurve3;
+  progress: number;
+  speed: number;
+};
 
 export class Park {
   readonly group = new THREE.Group();
   private readonly obstacles: Obstacle[] = [];
+  private readonly slideRiders: SlideRider[] = [];
 
   constructor() {
     this.createGround();
@@ -16,6 +24,18 @@ export class Park {
     this.createSlide();
     this.createSigns();
     this.createPalms();
+  }
+
+  update(delta: number): void {
+    const forward = new THREE.Vector3(0, 0, -1);
+    for (const rider of this.slideRiders) {
+      rider.progress = (rider.progress + delta * rider.speed) % 1;
+      const easedProgress = rider.progress * rider.progress * (3 - 2 * rider.progress);
+      rider.root.position.copy(rider.path.getPointAt(easedProgress));
+      rider.root.position.y += 0.32;
+      const tangent = rider.path.getTangentAt(easedProgress).normalize();
+      rider.root.quaternion.setFromUnitVectors(forward, tangent);
+    }
   }
 
   resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
@@ -100,21 +120,152 @@ export class Park {
   }
 
   private createSlide(): void {
-    const tower = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.4, 2.4, 8, 16),
-      new THREE.MeshStandardMaterial({ color: 0x0ea5e9 }),
+    const towerPosition = new THREE.Vector3(-29, 0, -22);
+    const supportMaterial = new THREE.MeshStandardMaterial({ color: 0x0e7490 });
+    const platformMaterial = new THREE.MeshStandardMaterial({ color: 0xfacc15 });
+    for (const [x, z] of [
+      [-1.4, -1.4],
+      [1.4, -1.4],
+      [-1.4, 1.4],
+      [1.4, 1.4],
+    ]) {
+      const support = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.23, 7, 10),
+        supportMaterial,
+      );
+      support.position.set(towerPosition.x + x, 3.5, towerPosition.z + z);
+      support.castShadow = true;
+      this.group.add(support);
+    }
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.3, 2.3, 0.35, 16),
+      platformMaterial,
     );
-    tower.position.set(25, 4, -20);
-    tower.castShadow = true;
-    const slide = new THREE.Mesh(
-      new THREE.TorusGeometry(5, 0.8, 8, 24, Math.PI * 1.4),
-      new THREE.MeshStandardMaterial({ color: 0xf97316 }),
-    );
-    slide.position.set(21, 5, -20);
-    slide.rotation.set(Math.PI / 2, 0.4, 0);
-    slide.castShadow = true;
-    this.group.add(tower, slide);
-    this.obstacles.push({ minX: 22, maxX: 28, minZ: -23, maxZ: -17 });
+    platform.position.set(towerPosition.x, 7, towerPosition.z);
+    platform.castShadow = true;
+    this.group.add(platform);
+
+    const firstPath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-28.2, 7.1, -21),
+      new THREE.Vector3(-26, 6.4, -18.5),
+      new THREE.Vector3(-24, 4.4, -17.5),
+      new THREE.Vector3(-23, 2.1, -15.5),
+      new THREE.Vector3(-21.5, 0.65, -14.5),
+    ]);
+    const secondPath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-29.8, 7.1, -20.8),
+      new THREE.Vector3(-32.5, 5.8, -18),
+      new THREE.Vector3(-30.5, 4, -14),
+      new THREE.Vector3(-25.5, 2.1, -13),
+      new THREE.Vector3(-22, 0.65, -12.5),
+    ]);
+    this.createSlideTrack(firstPath, 0xf97316);
+    this.createSlideTrack(secondPath, 0x38bdf8);
+    this.createSlideRider(firstPath, 0.04, 0xf43f5e, 0);
+    this.createSlideRider(firstPath, 0.56, 0x22c55e, 1);
+    this.createSlideRider(secondPath, 0.28, 0xa855f7, 2);
+
+    const stairMaterial = new THREE.MeshStandardMaterial({ color: 0xe2e8f0 });
+    const ladderRailGeometry = new THREE.CylinderGeometry(0.08, 0.08, 7, 8);
+    for (const x of [-0.55, 0.55]) {
+      const rail = new THREE.Mesh(ladderRailGeometry, stairMaterial);
+      rail.position.set(towerPosition.x + x, 3.5, towerPosition.z + 1.9);
+      this.group.add(rail);
+    }
+    for (let step = 0; step < 10; step += 1) {
+      const rung = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, 1.1, 8),
+        stairMaterial,
+      );
+      rung.rotation.z = Math.PI / 2;
+      rung.position.set(towerPosition.x, 0.45 + step * 0.67, towerPosition.z + 1.9);
+      this.group.add(rung);
+    }
+    this.obstacles.push({ minX: -32, maxX: -26, minZ: -25, maxZ: -19 });
+  }
+
+  private createSlideTrack(path: THREE.CatmullRomCurve3, color: number): void {
+    const slideMaterial = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.35,
+      metalness: 0.05,
+    });
+    const waterMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7dd3fc,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const up = new THREE.Vector3(0, 1, 0);
+    const localZ = new THREE.Vector3(0, 0, 1);
+    const localY = new THREE.Vector3(0, 1, 0);
+    const segments = 36;
+    for (let index = 0; index < segments; index += 1) {
+      const start = path.getPoint(index / segments);
+      const finish = path.getPoint((index + 1) / segments);
+      const direction = finish.clone().sub(start);
+      const length = direction.length();
+      const normalized = direction.clone().normalize();
+      const midpoint = start.clone().add(finish).multiplyScalar(0.5);
+      const orientation = new THREE.Quaternion().setFromUnitVectors(localZ, normalized);
+
+      const bed = new THREE.Mesh(
+        new THREE.BoxGeometry(1.7, 0.16, length + 0.08),
+        slideMaterial,
+      );
+      bed.position.copy(midpoint);
+      bed.quaternion.copy(orientation);
+      bed.castShadow = true;
+      this.group.add(bed);
+
+      const water = new THREE.Mesh(
+        new THREE.BoxGeometry(1.34, 0.03, length + 0.09),
+        waterMaterial,
+      );
+      water.position.copy(midpoint).addScaledVector(up, 0.11);
+      water.quaternion.copy(orientation);
+      this.group.add(water);
+
+      const lateral = new THREE.Vector3().crossVectors(up, normalized).normalize();
+      for (const side of [-1, 1]) {
+        const rail = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.09, 0.09, length + 0.08, 8),
+          slideMaterial,
+        );
+        rail.position
+          .copy(midpoint)
+          .addScaledVector(lateral, side * 0.78)
+          .addScaledVector(up, 0.32);
+        rail.quaternion.setFromUnitVectors(localY, normalized);
+        rail.castShadow = true;
+        this.group.add(rail);
+      }
+    }
+  }
+
+  private createSlideRider(
+    path: THREE.CatmullRomCurve3,
+    progress: number,
+    shirtColor: number,
+    skinIndex: number,
+  ): void {
+    const root = new THREE.Group();
+    const child = new HumanFigure({
+      shirtColor,
+      pantsColor: 0x0f766e,
+      skinColor: [0xffdbac, 0xc68642, 0x8d5524][skinIndex % 3],
+      sleeveless: true,
+    });
+    child.group.scale.setScalar(0.52);
+    child.group.rotation.x = Math.PI / 2;
+    child.group.position.y = 0.12;
+    root.add(child.group);
+    this.group.add(root);
+    this.slideRiders.push({
+      root,
+      path,
+      progress,
+      speed: 0.1 + skinIndex * 0.012,
+    });
   }
 
   private createSigns(): void {
