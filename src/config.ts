@@ -1,0 +1,47 @@
+export const CONFIG = {
+  world: {
+    halfSize: 40,
+    groundY: 0,
+  },
+  player: {
+    moveSpeed: 8,
+    radius: 0.7,
+    height: 2.4,
+    start: { x: 0, z: 20 },
+  },
+  camera: {
+    distance: 8,
+    height: 4.5,
+    sensitivity: 0.004,
+    minPitch: -0.15,
+    maxPitch: 0.75,
+    smoothing: 8,
+  },
+  chair: {
+    pickupRange: 3,
+    throwSpeed: 18,
+    npcThrowSpeed: 15,
+    gravity: 18,
+    groundHeight: 0.18,
+    collisionRadius: 0.7,
+    ownerImmunity: 0.4,
+  },
+  npc: {
+    walkSpeed: 2,
+    radius: 0.75,
+    retaliationDelay: 0.8,
+    chairSearchRange: 12,
+  },
+} as const;
+
+export const COLORS = {
+  sky: 0x8bd7ff,
+  grass: 0x72c66b,
+  path: 0xf2d0a4,
+  water: 0x22aee8,
+  poolEdge: 0xf8fafc,
+  player: 0xff4d6d,
+  npcWalker: 0xf59e0b,
+  npcSunbather: 0x8b5cf6,
+  chair: 0xffffff,
+} as const;
