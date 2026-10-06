@@ -3,7 +3,13 @@ import { COLORS, CONFIG } from '../config';
 import { HumanFigure } from './HumanFigure';
 
 export type NpcMode = 'walking' | 'sunbathing';
-export type NpcReaction = 'calm' | 'finding-chair' | 'aiming';
+export type NpcReaction =
+  | 'calm'
+  | 'falling'
+  | 'down'
+  | 'getting-up'
+  | 'finding-chair'
+  | 'aiming';
 
 export class Npc {
   readonly group = new THREE.Group();
@@ -14,6 +20,9 @@ export class Npc {
   private readonly target = new THREE.Vector3();
   private readonly figure: HumanFigure;
   private readonly bodyMaterial: THREE.MeshStandardMaterial;
+  private readonly fallStartPosition = new THREE.Vector3();
+  private fallStartRotationX = 0;
+  private fallStartRotationZ = 0;
   private walkPhase = Math.random() * Math.PI * 2;
 
   constructor(
@@ -55,6 +64,8 @@ export class Npc {
       this.bodyMaterial.emissiveIntensity = 0;
     }
 
+    if (this.updateKnockdown(delta)) return;
+
     if (this.mode !== 'walking' || this.reaction !== 'calm') {
       if (this.mode === 'walking') this.figure.resetPose();
       return;
@@ -75,9 +86,84 @@ export class Npc {
   registerHit(): boolean {
     if (this.hitCooldown > 0 || this.reaction !== 'calm') return false;
     this.hitCooldown = 0.6;
-    this.reaction = 'finding-chair';
-    this.reactionTimer = CONFIG.npc.retaliationDelay;
+    this.figure.resetPose();
+    this.fallStartPosition.copy(this.figure.group.position);
+    this.fallStartRotationX = this.figure.group.rotation.x;
+    this.fallStartRotationZ = this.figure.group.rotation.z;
+    this.reaction = 'falling';
+    this.reactionTimer = CONFIG.npc.fallDuration;
     return true;
+  }
+
+  private updateKnockdown(delta: number): boolean {
+    if (this.reaction === 'falling') {
+      this.reactionTimer = Math.max(0, this.reactionTimer - delta);
+      const progress = 1 - this.reactionTimer / CONFIG.npc.fallDuration;
+      const eased = 1 - (1 - progress) ** 3;
+      this.figure.group.rotation.x = THREE.MathUtils.lerp(
+        this.fallStartRotationX,
+        -Math.PI / 2,
+        eased,
+      );
+      this.figure.group.rotation.z = THREE.MathUtils.lerp(
+        this.fallStartRotationZ,
+        -0.22,
+        eased,
+      );
+      this.figure.group.position.x = THREE.MathUtils.lerp(
+        this.fallStartPosition.x,
+        this.fallStartPosition.x + 0.38,
+        eased,
+      );
+      this.figure.group.position.y = THREE.MathUtils.lerp(
+        this.fallStartPosition.y,
+        0.28,
+        eased,
+      );
+      this.figure.group.position.z = THREE.MathUtils.lerp(
+        this.fallStartPosition.z,
+        0.85,
+        eased,
+      );
+      if (this.reactionTimer <= 0) {
+        this.reaction = 'down';
+        this.reactionTimer = CONFIG.npc.downDuration;
+      }
+      return true;
+    }
+
+    if (this.reaction === 'down') {
+      this.reactionTimer = Math.max(0, this.reactionTimer - delta);
+      if (this.reactionTimer <= 0) {
+        this.reaction = 'getting-up';
+        this.reactionTimer = CONFIG.npc.getUpDuration;
+      }
+      return true;
+    }
+
+    if (this.reaction === 'getting-up') {
+      this.reactionTimer = Math.max(0, this.reactionTimer - delta);
+      const progress = 1 - this.reactionTimer / CONFIG.npc.getUpDuration;
+      const eased = progress * progress * (3 - 2 * progress);
+      this.figure.group.rotation.x = THREE.MathUtils.lerp(-Math.PI / 2, 0, eased);
+      this.figure.group.rotation.z = THREE.MathUtils.lerp(-0.22, 0, eased);
+      this.figure.group.position.x = THREE.MathUtils.lerp(
+        this.fallStartPosition.x + 0.38,
+        0,
+        eased,
+      );
+      this.figure.group.position.y = THREE.MathUtils.lerp(0.28, 0, eased);
+      this.figure.group.position.z = THREE.MathUtils.lerp(0.85, 0, eased);
+      if (this.reactionTimer <= 0) {
+        this.figure.group.position.set(0, 0, 0);
+        this.figure.group.rotation.set(0, 0, 0);
+        this.reaction = 'finding-chair';
+        this.reactionTimer = CONFIG.npc.retaliationDelay;
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private chooseTarget(): void {

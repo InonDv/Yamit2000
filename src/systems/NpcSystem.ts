@@ -37,15 +37,17 @@ export class NpcSystem {
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.reaction === 'calm') continue;
-      npc.reactionTimer -= delta;
 
-      if (npc.reaction === 'finding-chair' && npc.reactionTimer <= 0) {
+      if (npc.reaction === 'finding-chair') {
+        npc.reactionTimer -= delta;
+        if (npc.reactionTimer > 0) continue;
         const chair = this.claimChair(npc);
         chair.hold(npc.group, npc.id);
         this.retaliationChairs.set(npc.id, chair);
         npc.reaction = 'aiming';
         npc.reactionTimer = 0.55;
       } else if (npc.reaction === 'aiming') {
+        npc.reactionTimer -= delta;
         npc.group.lookAt(player.group.position.x, npc.group.position.y, player.group.position.z);
         if (npc.reactionTimer <= 0) this.throwAtPlayer(npc, player);
       }

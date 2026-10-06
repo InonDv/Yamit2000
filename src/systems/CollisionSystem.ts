@@ -31,7 +31,9 @@ export class CollisionSystem {
           const reacted = npc.registerHit();
           chair.land();
           this.onMessage(
-            reacted ? 'Direct hit! That NPC is retaliating!' : 'Chair hit!',
+            reacted
+              ? 'Direct hit! The NPC is down — and will retaliate!'
+              : 'Chair hit!',
           );
           break;
         }
