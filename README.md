@@ -16,9 +16,9 @@ Open the local URL printed by Vite, then click the game to capture the mouse.
 
 ## Controls
 
-- Up/Down arrows: move forward and backward
-- Left/Right arrows: rotate the camera and aim without changing position
-- WASD or mouse movement: rotate both the camera and the player's aim
+- W/S: move forward and backward
+- A/D: rotate the aim without changing position
+- Arrow keys or mouse movement: rotate the camera and the player's aim
 - Space near a white chair: pick it up
 - Space while carrying a chair: throw it forward
 - Escape: release the mouse

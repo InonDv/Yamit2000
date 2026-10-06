@@ -26,7 +26,7 @@ export class Player {
 
   update(delta: number, input: InputController): void {
     const move =
-      Number(input.isHeld('ArrowUp')) - Number(input.isHeld('ArrowDown'));
+      Number(input.isHeld('KeyW')) - Number(input.isHeld('KeyS'));
 
     if (move !== 0) {
       this.group.position.addScaledVector(
