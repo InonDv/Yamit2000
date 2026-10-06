@@ -8,6 +8,7 @@ interface HumanFigureOptions {
   sleeveless?: boolean;
   nikeBranding?: boolean;
   backText?: string;
+  knife?: boolean;
 }
 
 export class HumanFigure {
@@ -58,6 +59,7 @@ export class HumanFigure {
       flipFlopMaterial,
       options.nikeBranding ?? false,
     );
+    if (options.knife) this.addKnife();
     this.createLeg(
       this.rightLeg,
       0.24,
@@ -211,6 +213,53 @@ export class HumanFigure {
       capLogo.position.set(0, 2.55, -0.34);
       this.group.add(capLogo);
     }
+  }
+
+  private addKnife(): void {
+    const handleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x111827,
+      roughness: 0.7,
+    });
+    const bladeMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      metalness: 0.25,
+      roughness: 0.18,
+      emissive: 0x334155,
+      emissiveIntensity: 0.22,
+    });
+    const handle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.16, 0.26, 0.12),
+      handleMaterial,
+    );
+    handle.position.set(0, -1.08, -0.03);
+    const guard = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.06, 0.14),
+      handleMaterial,
+    );
+    guard.position.set(0, -1.21, -0.03);
+
+    const bladeShape = new THREE.Shape();
+    bladeShape.moveTo(-0.09, 0);
+    bladeShape.lineTo(0.09, 0);
+    bladeShape.lineTo(0.065, -0.3);
+    bladeShape.lineTo(0, -0.46);
+    bladeShape.lineTo(-0.065, -0.3);
+    bladeShape.closePath();
+    const blade = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(bladeShape, {
+        depth: 0.035,
+        bevelEnabled: true,
+        bevelSize: 0.012,
+        bevelThickness: 0.01,
+        bevelSegments: 1,
+      }),
+      bladeMaterial,
+    );
+    blade.position.set(0, -1.24, -0.02);
+    blade.castShadow = true;
+    handle.castShadow = true;
+    guard.castShadow = true;
+    this.rightArm.add(handle, guard, blade);
   }
 
   private createNikeLogo(width: number, height: number, color: string): THREE.Mesh {

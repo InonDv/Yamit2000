@@ -15,6 +15,7 @@ export class Player {
     sleeveless: true,
     nikeBranding: true,
     backText: 'יקיר הגבר',
+    knife: true,
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private walkPhase = 0;
