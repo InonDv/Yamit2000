@@ -74,14 +74,14 @@ export class Chair {
     this.group.rotation.set(0, 0, 0);
   }
 
-  throw(direction: THREE.Vector3, speed: number): void {
+  throw(direction: THREE.Vector3, speed: number, lift = 3.4): void {
     this.state = 'thrown';
     this.holder = null;
     this.flightTime = 0;
     this.pendingLanding = false;
     this.previousPosition.copy(this.group.position);
     this.velocity.copy(direction).normalize().multiplyScalar(speed);
-    this.velocity.y += 3.4;
+    this.velocity.y += lift;
   }
 
   land(): void {

@@ -37,6 +37,8 @@ export const CONFIG = {
     getUpDuration: 0.65,
     retaliationDelay: 0.8,
     chairSearchRange: 12,
+    ambientThrowMinDelay: 3.5,
+    ambientThrowMaxDelay: 7,
   },
 } as const;
 

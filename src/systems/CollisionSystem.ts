@@ -49,9 +49,7 @@ export class CollisionSystem {
             CONFIG.chair.collisionRadius + CONFIG.npc.radius;
           const directHit =
             nearestDistanceSquared <= physicalHitDistance * physicalHitDistance;
-          const reacted = directHit
-            ? threatenedNpc.registerHit()
-            : threatenedNpc.registerThreat();
+          const reacted = this.npcs.registerPlayerAttack(threatenedNpc);
           if (directHit) {
             chair.land();
           }
@@ -59,13 +57,35 @@ export class CollisionSystem {
             this.onMessage(
               directHit
                 ? 'Direct hit! The NPC is down — and will retaliate!'
-                : 'Near miss! That NPC saw the chair and will retaliate!',
+                : 'Close throw! The NPC falls and will retaliate!',
             );
           } else if (directHit) {
             this.onMessage('Chair hit!');
           }
         }
       } else if (chair.owner?.startsWith('npc-')) {
+        let hitNpc = false;
+        const npcHitDistance = CONFIG.chair.collisionRadius + CONFIG.npc.radius;
+        for (const npc of this.npcs.npcs) {
+          if (npc.id === chair.owner) continue;
+          const npcCenter = npc.group.position.clone();
+          npcCenter.y += 1.1;
+          if (
+            this.segmentDistanceSquared(
+              chair.previousPosition,
+              chair.group.position,
+              npcCenter,
+            ) > npcHitDistance * npcHitDistance
+          ) {
+            continue;
+          }
+          this.npcs.registerNpcAttack(npc, chair.owner);
+          chair.land();
+          hitNpc = true;
+          break;
+        }
+        if (hitNpc) continue;
+
         const hitDistance = CONFIG.chair.collisionRadius + CONFIG.player.radius;
         const playerCenter = this.player.aimOrigin;
         if (

@@ -84,7 +84,14 @@ export class Npc {
   }
 
   registerHit(): boolean {
-    if (this.hitCooldown > 0 || this.reaction !== 'calm') return false;
+    if (
+      this.hitCooldown > 0 ||
+      this.reaction === 'falling' ||
+      this.reaction === 'down' ||
+      this.reaction === 'getting-up'
+    ) {
+      return false;
+    }
     this.hitCooldown = 0.6;
     this.figure.resetPose();
     this.fallStartPosition.copy(this.figure.group.position);
@@ -92,18 +99,6 @@ export class Npc {
     this.fallStartRotationZ = this.figure.group.rotation.z;
     this.reaction = 'falling';
     this.reactionTimer = CONFIG.npc.fallDuration;
-    return true;
-  }
-
-  registerThreat(): boolean {
-    if (this.reaction !== 'calm') return false;
-    this.figure.resetPose();
-    if (this.mode === 'sunbathing') {
-      this.figure.group.position.set(0, 0, 0);
-      this.figure.group.rotation.set(0, 0, 0);
-    }
-    this.reaction = 'finding-chair';
-    this.reactionTimer = CONFIG.npc.retaliationDelay;
     return true;
   }
 
