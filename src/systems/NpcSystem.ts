@@ -27,13 +27,22 @@ export class NpcSystem {
       ['walking', 7, -18],
       ['walking', -23, -8],
       ['walking', 28, 28],
+      ['sunbathing', -32, 20],
+      ['sunbathing', 32, 20],
+      ['sunbathing', -15, 33],
+      ['sunbathing', 30, -8],
+      ['walking', -15, 18],
+      ['walking', 8, 22],
+      ['walking', -32, 0],
+      ['walking', 30, -28],
+      ['walking', 2, -30],
     ];
     placements.forEach(([mode, x, z], index) => {
       const npc = new Npc(index, mode, new THREE.Vector3(x, 0, z));
       this.npcs.push(npc);
       this.scene.add(npc.group);
       if (mode === 'walking') {
-        this.ambientTimers.set(npc.id, 2 + index * 0.7);
+        this.ambientTimers.set(npc.id, 2 + (index % 5) * 0.7);
       }
     });
   }
