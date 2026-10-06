@@ -1,0 +1,96 @@
+export class AudioSystem {
+  private context: AudioContext | null = null;
+
+  constructor() {
+    window.addEventListener('pointerdown', this.unlock, { once: true });
+    window.addEventListener('keydown', this.unlock, { once: true });
+  }
+
+  playHeadshot(): void {
+    const context = this.getContext();
+    if (context) {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(180, context.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(70, context.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.14);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start();
+      oscillator.stop(context.currentTime + 0.15);
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const voiceLine = new SpeechSynthesisUtterance('Headshot!');
+      voiceLine.lang = 'en-US';
+      voiceLine.rate = 0.9;
+      voiceLine.pitch = 0.75;
+      voiceLine.volume = 1;
+      window.speechSynthesis.speak(voiceLine);
+    }
+  }
+
+  playPunch(): void {
+    const context = this.getContext();
+    if (!context) return;
+
+    const duration = 0.18;
+    const buffer = context.createBuffer(
+      1,
+      Math.floor(context.sampleRate * duration),
+      context.sampleRate,
+    );
+    const samples = buffer.getChannelData(0);
+    for (let index = 0; index < samples.length; index += 1) {
+      const decay = 1 - index / samples.length;
+      samples[index] = (Math.random() * 2 - 1) * decay * decay;
+    }
+
+    const noise = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const noiseGain = context.createGain();
+    noise.buffer = buffer;
+    filter.type = 'lowpass';
+    filter.frequency.value = 650;
+    noiseGain.gain.setValueAtTime(0.7, context.currentTime);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    noise.connect(filter).connect(noiseGain).connect(context.destination);
+
+    const thump = context.createOscillator();
+    const thumpGain = context.createGain();
+    thump.type = 'sine';
+    thump.frequency.setValueAtTime(115, context.currentTime);
+    thump.frequency.exponentialRampToValueAtTime(48, context.currentTime + duration);
+    thumpGain.gain.setValueAtTime(0.55, context.currentTime);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + duration);
+    thump.connect(thumpGain).connect(context.destination);
+
+    noise.start();
+    thump.start();
+    noise.stop(context.currentTime + duration);
+    thump.stop(context.currentTime + duration);
+  }
+
+  dispose(): void {
+    window.removeEventListener('pointerdown', this.unlock);
+    window.removeEventListener('keydown', this.unlock);
+    void this.context?.close();
+  }
+
+  private readonly unlock = (): void => {
+    const context = this.getContext();
+    if (context?.state === 'suspended') void context.resume();
+  };
+
+  private getContext(): AudioContext | null {
+    if (!this.context) {
+      const AudioContextClass = window.AudioContext;
+      if (!AudioContextClass) return null;
+      this.context = new AudioContextClass();
+    }
+    if (this.context.state === 'suspended') void this.context.resume();
+    return this.context;
+  }
+}

@@ -3,6 +3,7 @@ import './style.css';
 import { ThirdPersonCamera } from './camera/ThirdPersonCamera';
 import { Player } from './entities/Player';
 import { InputController } from './input/InputController';
+import { AudioSystem } from './systems/AudioSystem';
 import { ChairSystem } from './systems/ChairSystem';
 import { CollisionSystem } from './systems/CollisionSystem';
 import { NpcSystem } from './systems/NpcSystem';
@@ -31,6 +32,7 @@ app.append(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 140);
 const followCamera = new ThirdPersonCamera(camera);
 const input = new InputController(renderer.domElement);
+const audio = new AudioSystem();
 const park = new Park();
 const player = new Player();
 const chairSystem = new ChairSystem(scene);
@@ -57,7 +59,13 @@ const showMessage = (message: string, seconds = 2.4): void => {
   statusElement.textContent = message;
   messageTimer = seconds;
 };
-const collisions = new CollisionSystem(chairSystem, npcSystem, player, showMessage);
+const collisions = new CollisionSystem(
+  chairSystem,
+  npcSystem,
+  player,
+  showMessage,
+  () => audio.playHeadshot(),
+);
 const clock = new THREE.Clock();
 const previousPlayerPosition = new THREE.Vector3();
 const projectedAim = new THREE.Vector3();
@@ -93,6 +101,7 @@ function animate(): void {
 
   if (input.consumePressed('Space')) {
     if (!chairSystem.playerChair && npcSystem.punchNearest(player)) {
+      audio.playPunch();
       showMessage('Punch! That NPC is getting back up to retaliate.');
     } else {
       const action = chairSystem.handlePlayerAction(player);
@@ -130,6 +139,7 @@ function onResize(): void {
 window.addEventListener('resize', onResize);
 window.addEventListener('beforeunload', () => {
   input.dispose();
+  audio.dispose();
   renderer.dispose();
 });
 
