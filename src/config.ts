@@ -16,6 +16,7 @@ export const CONFIG = {
     minPitch: -0.15,
     maxPitch: 0.75,
     smoothing: 8,
+    keyboardRotationSpeed: 1.5,
   },
   chair: {
     pickupRange: 3,

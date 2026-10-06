@@ -25,12 +25,8 @@ export class Player {
   }
 
   update(delta: number, input: InputController, cameraYaw: number): void {
-    const x =
-      Number(input.isHeld('ArrowRight') || input.isHeld('KeyD')) -
-      Number(input.isHeld('ArrowLeft') || input.isHeld('KeyA'));
-    const z =
-      Number(input.isHeld('ArrowDown') || input.isHeld('KeyS')) -
-      Number(input.isHeld('ArrowUp') || input.isHeld('KeyW'));
+    const x = Number(input.isHeld('ArrowRight')) - Number(input.isHeld('ArrowLeft'));
+    const z = Number(input.isHeld('ArrowDown')) - Number(input.isHeld('ArrowUp'));
     this.movement.set(x, 0, z);
 
     if (this.movement.lengthSq() > 0) {
