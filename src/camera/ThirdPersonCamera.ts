@@ -19,7 +19,7 @@ export class ThirdPersonCamera {
       CONFIG.camera.keyboardRotationSpeed *
       delta;
     this.pitch = THREE.MathUtils.clamp(
-      this.pitch -
+      this.pitch +
         input.consumePointerDeltaY() * CONFIG.camera.sensitivity +
         (Number(input.isHeld('ArrowDown')) - Number(input.isHeld('ArrowUp'))) *
           CONFIG.camera.keyboardRotationSpeed *
