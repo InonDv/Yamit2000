@@ -14,6 +14,7 @@ export class Player {
     baseballCap: true,
     sleeveless: true,
     nikeBranding: true,
+    backText: 'יקיר הגבר',
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private readonly upAxis = new THREE.Vector3(0, 1, 0);

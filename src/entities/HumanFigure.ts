@@ -7,6 +7,7 @@ interface HumanFigureOptions {
   baseballCap?: boolean;
   sleeveless?: boolean;
   nikeBranding?: boolean;
+  backText?: string;
 }
 
 export class HumanFigure {
@@ -88,6 +89,12 @@ export class HumanFigure {
       const chestLogo = this.createNikeLogo(0.3, 0.12, '#111827');
       chestLogo.position.set(0, 1.48, -0.255);
       this.group.add(chestLogo);
+    }
+
+    if (options.backText) {
+      const backLabel = this.createBackLabel(options.backText);
+      backLabel.position.set(0, 1.48, 0.255);
+      this.group.add(backLabel);
     }
 
     if (options.baseballCap) this.addBaseballCap(options.nikeBranding ?? false);
@@ -226,5 +233,31 @@ export class HumanFigure {
       depthWrite: false,
     });
     return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  }
+
+  private createBackLabel(text: string): THREE.Mesh {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 160;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.direction = 'rtl';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.font = '900 76px Arial, sans-serif';
+      context.fillStyle = '#172554';
+      context.fillText(text, canvas.width / 2, canvas.height / 2);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.Mesh(
+      new THREE.PlaneGeometry(0.82, 0.3),
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
   }
 }
