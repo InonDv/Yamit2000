@@ -11,8 +11,10 @@ import { COLORS, CONFIG } from './config';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 const status = document.querySelector<HTMLElement>('#status');
-if (!app || !status) throw new Error('Game UI failed to initialize.');
+const crosshair = document.querySelector<HTMLElement>('#crosshair');
+if (!app || !status || !crosshair) throw new Error('Game UI failed to initialize.');
 const statusElement = status;
+const crosshairElement = crosshair;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(COLORS.sky);
@@ -58,16 +60,33 @@ const showMessage = (message: string, seconds = 2.4): void => {
 const collisions = new CollisionSystem(chairSystem, npcSystem, player, showMessage);
 const clock = new THREE.Clock();
 const previousPlayerPosition = new THREE.Vector3();
+const projectedAim = new THREE.Vector3();
 
 function animate(): void {
   const delta = Math.min(clock.getDelta(), 0.05);
   previousPlayerPosition.copy(player.group.position);
-  player.update(delta, input, followCamera.yaw);
+  player.update(delta, input);
   park.update(delta);
   park.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   npcSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   chairSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   followCamera.update(delta, player.group.position, input);
+  projectedAim
+    .copy(player.aimOrigin)
+    .addScaledVector(player.facing, 10)
+    .project(camera);
+  const aimVisible = projectedAim.z >= -1 && projectedAim.z <= 1;
+  crosshairElement.style.visibility = aimVisible ? 'visible' : 'hidden';
+  crosshairElement.style.left = `${THREE.MathUtils.clamp(
+    (projectedAim.x * 0.5 + 0.5) * 100,
+    3,
+    97,
+  )}%`;
+  crosshairElement.style.top = `${THREE.MathUtils.clamp(
+    (-projectedAim.y * 0.5 + 0.5) * 100,
+    3,
+    97,
+  )}%`;
 
   if (input.consumePressed('Space')) {
     const action = chairSystem.handlePlayerAction(player);

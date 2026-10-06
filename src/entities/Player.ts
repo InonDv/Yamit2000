@@ -16,7 +16,7 @@ export class Player {
     nikeBranding: true,
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
-  private readonly movement = new THREE.Vector3();
+  private readonly upAxis = new THREE.Vector3(0, 1, 0);
   private walkPhase = 0;
 
   constructor() {
@@ -24,18 +24,26 @@ export class Player {
     this.group.position.set(CONFIG.player.start.x, 0, CONFIG.player.start.z);
   }
 
-  update(delta: number, input: InputController, cameraYaw: number): void {
-    const x = Number(input.isHeld('ArrowRight')) - Number(input.isHeld('ArrowLeft'));
-    const z = Number(input.isHeld('ArrowDown')) - Number(input.isHeld('ArrowUp'));
-    this.movement.set(x, 0, z);
+  update(delta: number, input: InputController): void {
+    const turn =
+      Number(input.isHeld('ArrowRight')) - Number(input.isHeld('ArrowLeft'));
+    const move =
+      Number(input.isHeld('ArrowUp')) - Number(input.isHeld('ArrowDown'));
 
-    if (this.movement.lengthSq() > 0) {
-      this.movement.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
-      this.group.position.addScaledVector(this.movement, CONFIG.player.moveSpeed * delta);
-      this.facing.lerp(this.movement, Math.min(1, delta * 14)).normalize();
+    if (turn !== 0) {
+      this.facing
+        .applyAxisAngle(this.upAxis, -turn * CONFIG.player.turnSpeed * delta)
+        .normalize();
       this.group.rotation.y = Math.atan2(-this.facing.x, -this.facing.z);
+    }
+
+    if (move !== 0) {
+      this.group.position.addScaledVector(
+        this.facing,
+        move * CONFIG.player.moveSpeed * delta,
+      );
       this.walkPhase += delta * 10;
-      this.figure.setWalkCycle(this.walkPhase);
+      this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
     } else {
       this.figure.resetPose();
     }
