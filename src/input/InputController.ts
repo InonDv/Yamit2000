@@ -2,6 +2,7 @@ export class InputController {
   private readonly held = new Set<string>();
   private readonly pressed = new Set<string>();
   private pointerDeltaX = 0;
+  private pointerDeltaY = 0;
 
   constructor(private readonly element: HTMLElement) {
     window.addEventListener('keydown', this.onKeyDown);
@@ -24,6 +25,12 @@ export class InputController {
   consumePointerDeltaX(): number {
     const delta = this.pointerDeltaX;
     this.pointerDeltaX = 0;
+    return delta;
+  }
+
+  consumePointerDeltaY(): number {
+    const delta = this.pointerDeltaY;
+    this.pointerDeltaY = 0;
     return delta;
   }
 
@@ -53,6 +60,7 @@ export class InputController {
     this.held.clear();
     this.pressed.clear();
     this.pointerDeltaX = 0;
+    this.pointerDeltaY = 0;
   };
 
   private readonly onPointerDown = (): void => {
@@ -62,6 +70,7 @@ export class InputController {
   private readonly onPointerMove = (event: PointerEvent): void => {
     if (document.pointerLockElement === this.element) {
       this.pointerDeltaX += event.movementX;
+      this.pointerDeltaY += event.movementY;
     }
   };
 }

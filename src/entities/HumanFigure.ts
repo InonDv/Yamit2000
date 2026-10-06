@@ -5,6 +5,7 @@ interface HumanFigureOptions {
   pantsColor: number;
   skinColor?: number;
   baseballCap?: boolean;
+  sleeveless?: boolean;
 }
 
 export class HumanFigure {
@@ -32,20 +33,28 @@ export class HumanFigure {
     const shoeMaterial = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
 
     const torso = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.95, 0.48),
+      new THREE.CylinderGeometry(0.34, 0.42, 0.95, 14),
       this.shirtMaterial,
     );
+    torso.scale.z = 0.72;
     torso.position.y = 1.38;
-    this.group.add(torso);
+    const hips = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.4, 0.34, 0.3, 12),
+      pantsMaterial,
+    );
+    hips.scale.z = 0.72;
+    hips.position.y = 0.87;
+    this.group.add(torso, hips);
 
-    this.createArm(this.leftArm, -0.57, skinMaterial);
-    this.createArm(this.rightArm, 0.57, skinMaterial);
+    this.createArm(this.leftArm, -0.49, skinMaterial, options.sleeveless ?? false);
+    this.createArm(this.rightArm, 0.49, skinMaterial, options.sleeveless ?? false);
     this.createLeg(this.leftLeg, -0.24, pantsMaterial, shoeMaterial);
     this.createLeg(this.rightLeg, 0.24, pantsMaterial, shoeMaterial);
 
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.18, 8), skinMaterial);
     neck.position.y = 1.94;
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 10), skinMaterial);
+    head.scale.set(0.92, 1.08, 0.95);
     head.position.y = 2.23;
 
     const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x172554 });
@@ -86,21 +95,28 @@ export class HumanFigure {
     limb: THREE.Group,
     x: number,
     skinMaterial: THREE.MeshStandardMaterial,
+    sleeveless: boolean,
   ): void {
     limb.position.set(x, 1.72, 0);
-    const sleeve = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.16, 0.14, 0.38, 8),
-      this.shirtMaterial,
+    const shoulder = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 10, 8),
+      sleeveless ? skinMaterial : this.shirtMaterial,
     );
-    sleeve.position.y = -0.17;
-    const forearm = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.11, 0.1, 0.55, 8),
+    shoulder.position.y = -0.05;
+    const upperArm = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.13, 0.105, 0.42, 10),
       skinMaterial,
     );
-    forearm.position.y = -0.62;
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), skinMaterial);
-    hand.position.y = -0.92;
-    limb.add(sleeve, forearm, hand);
+    upperArm.position.y = -0.28;
+    const forearm = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.105, 0.085, 0.48, 10),
+      skinMaterial,
+    );
+    forearm.position.y = -0.71;
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 7), skinMaterial);
+    hand.scale.y = 1.18;
+    hand.position.y = -1;
+    limb.add(shoulder, upperArm, forearm, hand);
     this.group.add(limb);
   }
 

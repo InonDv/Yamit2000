@@ -12,6 +12,11 @@ export class ThirdPersonCamera {
 
   update(delta: number, targetPosition: THREE.Vector3, input: InputController): void {
     this.yaw -= input.consumePointerDeltaX() * CONFIG.camera.sensitivity;
+    this.pitch = THREE.MathUtils.clamp(
+      this.pitch - input.consumePointerDeltaY() * CONFIG.camera.sensitivity,
+      CONFIG.camera.minPitch,
+      CONFIG.camera.maxPitch,
+    );
 
     const horizontalDistance = CONFIG.camera.distance * Math.cos(this.pitch);
     const height = CONFIG.camera.height + CONFIG.camera.distance * Math.sin(this.pitch);
@@ -27,7 +32,4 @@ export class ThirdPersonCamera {
     this.camera.lookAt(this.target);
   }
 
-  setPitch(value: number): void {
-    this.pitch = THREE.MathUtils.clamp(value, CONFIG.camera.minPitch, CONFIG.camera.maxPitch);
-  }
 }

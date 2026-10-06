@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { COLORS, CONFIG } from '../config';
+import { CONFIG } from '../config';
 import type { InputController } from '../input/InputController';
 import { HumanFigure } from './HumanFigure';
 
@@ -9,9 +9,10 @@ export class Player {
   hitFlash = 0;
 
   private readonly figure = new HumanFigure({
-    shirtColor: COLORS.player,
+    shirtColor: 0xf8fafc,
     pantsColor: 0x2563eb,
     baseballCap: true,
+    sleeveless: true,
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private readonly movement = new THREE.Vector3();
