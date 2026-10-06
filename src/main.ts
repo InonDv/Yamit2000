@@ -61,6 +61,7 @@ const collisions = new CollisionSystem(chairSystem, npcSystem, player, showMessa
 const clock = new THREE.Clock();
 const previousPlayerPosition = new THREE.Vector3();
 const projectedAim = new THREE.Vector3();
+const cameraFacing = new THREE.Vector3();
 
 function animate(): void {
   const delta = Math.min(clock.getDelta(), 0.05);
@@ -71,6 +72,8 @@ function animate(): void {
   npcSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   chairSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   followCamera.update(delta, player.group.position, input);
+  camera.getWorldDirection(cameraFacing);
+  player.faceDirection(cameraFacing);
   projectedAim
     .copy(player.aimOrigin)
     .addScaledVector(player.facing, 10)

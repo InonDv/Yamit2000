@@ -17,7 +17,6 @@ export class Player {
     backText: 'יקיר הגבר',
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
-  private readonly upAxis = new THREE.Vector3(0, 1, 0);
   private walkPhase = 0;
 
   constructor() {
@@ -26,17 +25,8 @@ export class Player {
   }
 
   update(delta: number, input: InputController): void {
-    const turn =
-      Number(input.isHeld('ArrowRight')) - Number(input.isHeld('ArrowLeft'));
     const move =
       Number(input.isHeld('ArrowUp')) - Number(input.isHeld('ArrowDown'));
-
-    if (turn !== 0) {
-      this.facing
-        .applyAxisAngle(this.upAxis, -turn * CONFIG.player.turnSpeed * delta)
-        .normalize();
-      this.group.rotation.y = Math.atan2(-this.facing.x, -this.facing.z);
-    }
 
     if (move !== 0) {
       this.group.position.addScaledVector(
@@ -60,6 +50,13 @@ export class Player {
     } else {
       this.bodyMaterial.emissiveIntensity = 0;
     }
+  }
+
+  faceDirection(direction: THREE.Vector3): void {
+    direction.y = 0;
+    if (direction.lengthSq() === 0) return;
+    this.facing.copy(direction).normalize();
+    this.group.rotation.y = Math.atan2(-this.facing.x, -this.facing.z);
   }
 
   registerHit(): void {

@@ -12,8 +12,10 @@ export class ThirdPersonCamera {
 
   update(delta: number, targetPosition: THREE.Vector3, input: InputController): void {
     this.yaw -= input.consumePointerDeltaX() * CONFIG.camera.sensitivity;
+    const rotateLeft = input.isHeld('KeyA') || input.isHeld('ArrowLeft');
+    const rotateRight = input.isHeld('KeyD') || input.isHeld('ArrowRight');
     this.yaw +=
-      (Number(input.isHeld('KeyA')) - Number(input.isHeld('KeyD'))) *
+      (Number(rotateLeft) - Number(rotateRight)) *
       CONFIG.camera.keyboardRotationSpeed *
       delta;
     this.pitch = THREE.MathUtils.clamp(
