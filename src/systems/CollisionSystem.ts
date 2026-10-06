@@ -25,7 +25,13 @@ export class CollisionSystem {
           const hitDistance = CONFIG.chair.collisionRadius + CONFIG.npc.radius;
           const npcCenter = npc.group.position.clone();
           npcCenter.y += 1.1;
-          if (chair.group.position.distanceToSquared(npcCenter) > hitDistance * hitDistance) {
+          if (
+            this.segmentDistanceSquared(
+              chair.previousPosition,
+              chair.group.position,
+              npcCenter,
+            ) > hitDistance * hitDistance
+          ) {
             continue;
           }
           const reacted = npc.registerHit();
@@ -40,12 +46,53 @@ export class CollisionSystem {
       } else if (chair.owner?.startsWith('npc-')) {
         const hitDistance = CONFIG.chair.collisionRadius + CONFIG.player.radius;
         const playerCenter = this.player.aimOrigin;
-        if (chair.group.position.distanceToSquared(playerCenter) <= hitDistance * hitDistance) {
+        if (
+          this.segmentDistanceSquared(
+            chair.previousPosition,
+            chair.group.position,
+            playerCenter,
+          ) <= hitDistance * hitDistance
+        ) {
           this.player.registerHit();
           chair.land();
           this.onMessage('Ouch! An NPC hit you with a chair.');
         }
       }
     }
+  }
+
+  private segmentDistanceSquared(
+    start: { x: number; y: number; z: number },
+    end: { x: number; y: number; z: number },
+    point: { x: number; y: number; z: number },
+  ): number {
+    const segmentX = end.x - start.x;
+    const segmentY = end.y - start.y;
+    const segmentZ = end.z - start.z;
+    const lengthSquared =
+      segmentX * segmentX + segmentY * segmentY + segmentZ * segmentZ;
+    if (lengthSquared === 0) {
+      const dx = point.x - start.x;
+      const dy = point.y - start.y;
+      const dz = point.z - start.z;
+      return dx * dx + dy * dy + dz * dz;
+    }
+    const projection = Math.max(
+      0,
+      Math.min(
+        1,
+        ((point.x - start.x) * segmentX +
+          (point.y - start.y) * segmentY +
+          (point.z - start.z) * segmentZ) /
+          lengthSquared,
+      ),
+    );
+    const closestX = start.x + segmentX * projection;
+    const closestY = start.y + segmentY * projection;
+    const closestZ = start.z + segmentZ * projection;
+    const dx = point.x - closestX;
+    const dy = point.y - closestY;
+    const dz = point.z - closestZ;
+    return dx * dx + dy * dy + dz * dz;
   }
 }

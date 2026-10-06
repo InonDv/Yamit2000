@@ -7,10 +7,12 @@ export type ChairOwner = 'player' | string | null;
 export class Chair {
   readonly group = new THREE.Group();
   readonly velocity = new THREE.Vector3();
+  readonly previousPosition = new THREE.Vector3();
   state: ChairState = 'idle';
   owner: ChairOwner = null;
   holder: THREE.Object3D | null = null;
   flightTime = 0;
+  pendingLanding = false;
 
   constructor(position: THREE.Vector3) {
     const material = new THREE.MeshStandardMaterial({
@@ -59,6 +61,7 @@ export class Chair {
       if (object instanceof THREE.Mesh) object.castShadow = true;
     });
     this.group.position.copy(position);
+    this.previousPosition.copy(position);
   }
 
   hold(holder: THREE.Object3D, owner: Exclude<ChairOwner, null>): void {
@@ -67,6 +70,7 @@ export class Chair {
     this.holder = holder;
     this.velocity.set(0, 0, 0);
     this.flightTime = 0;
+    this.pendingLanding = false;
     this.group.rotation.set(0, 0, 0);
   }
 
@@ -74,6 +78,8 @@ export class Chair {
     this.state = 'thrown';
     this.holder = null;
     this.flightTime = 0;
+    this.pendingLanding = false;
+    this.previousPosition.copy(this.group.position);
     this.velocity.copy(direction).normalize().multiplyScalar(speed);
     this.velocity.y += 3.4;
   }
@@ -83,11 +89,14 @@ export class Chair {
     this.owner = null;
     this.holder = null;
     this.velocity.set(0, 0, 0);
+    this.pendingLanding = false;
     this.group.position.y = CONFIG.chair.groundHeight;
+    this.previousPosition.copy(this.group.position);
     this.group.rotation.set(0, this.group.rotation.y, Math.PI / 2);
   }
 
   update(delta: number): void {
+    this.previousPosition.copy(this.group.position);
     if (this.state === 'held' && this.holder) {
       const holderPosition = new THREE.Vector3();
       const holderQuaternion = new THREE.Quaternion();
@@ -100,7 +109,7 @@ export class Chair {
       return;
     }
 
-    if (this.state !== 'thrown') return;
+    if (this.state !== 'thrown' || this.pendingLanding) return;
     this.flightTime += delta;
     this.velocity.y -= CONFIG.chair.gravity * delta;
     this.group.position.addScaledVector(this.velocity, delta);
@@ -108,7 +117,8 @@ export class Chair {
     this.group.rotateZ(delta * 4);
 
     if (this.group.position.y <= CONFIG.chair.groundHeight && this.velocity.y < 0) {
-      this.land();
+      this.group.position.y = CONFIG.chair.groundHeight;
+      this.pendingLanding = true;
     }
   }
 }

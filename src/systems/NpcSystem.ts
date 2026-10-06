@@ -54,6 +54,18 @@ export class NpcSystem {
     }
   }
 
+  resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
+    const blockingDistance = CONFIG.player.radius + CONFIG.npc.radius;
+    for (const npc of this.npcs) {
+      const dx = position.x - npc.group.position.x;
+      const dz = position.z - npc.group.position.z;
+      if (dx * dx + dz * dz < blockingDistance * blockingDistance) {
+        position.copy(previous);
+        return;
+      }
+    }
+  }
+
   private claimChair(npc: Npc): Chair {
     return (
       this.chairSystem.findNearestIdle(npc.group.position, CONFIG.npc.chairSearchRange) ??

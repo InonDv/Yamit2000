@@ -65,6 +65,8 @@ function animate(): void {
   player.update(delta, input, followCamera.yaw);
   park.update(delta);
   park.resolvePlayerPosition(player.group.position, previousPlayerPosition);
+  npcSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
+  chairSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   followCamera.update(delta, player.group.position, input);
 
   if (input.consumePressed('Space')) {
@@ -77,6 +79,7 @@ function animate(): void {
   npcSystem.update(delta, player);
   chairSystem.update(delta);
   collisions.update();
+  chairSystem.finalizeLandings();
 
   messageTimer -= delta;
   if (messageTimer <= 0) {

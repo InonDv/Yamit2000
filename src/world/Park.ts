@@ -216,6 +216,14 @@ export class Park {
       bed.quaternion.copy(orientation);
       bed.castShadow = true;
       this.group.add(bed);
+      if (midpoint.y < 1.5) {
+        this.obstacles.push({
+          minX: Math.min(start.x, finish.x) - 0.95,
+          maxX: Math.max(start.x, finish.x) + 0.95,
+          minZ: Math.min(start.z, finish.z) - 0.95,
+          maxZ: Math.max(start.z, finish.z) + 0.95,
+        });
+      }
 
       const water = new THREE.Mesh(
         new THREE.BoxGeometry(1.34, 0.03, length + 0.09),
@@ -296,8 +304,30 @@ export class Park {
         new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), side: THREE.DoubleSide }),
       );
       sign.position.set(x, y, z);
-      if (Math.abs(x) > 30) sign.rotation.y = Math.PI / 2;
+      const sideFacing = Math.abs(x) > 30;
+      if (sideFacing) sign.rotation.y = Math.PI / 2;
       this.group.add(sign);
+
+      const postMaterial = new THREE.MeshStandardMaterial({ color: 0xe2e8f0 });
+      for (const offset of [-2.6, 2.6]) {
+        const post = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.11, 0.14, 3.5, 8),
+          postMaterial,
+        );
+        post.position.set(
+          x + (sideFacing ? 0 : offset),
+          1.75,
+          z + (sideFacing ? offset : 0),
+        );
+        post.castShadow = true;
+        this.group.add(post);
+        this.obstacles.push({
+          minX: post.position.x - 0.35,
+          maxX: post.position.x + 0.35,
+          minZ: post.position.z - 0.35,
+          maxZ: post.position.z + 0.35,
+        });
+      }
     }
   }
 
@@ -320,6 +350,12 @@ export class Park {
       crown.position.set(x, 5.1, z);
       crown.castShadow = true;
       this.group.add(trunk, crown);
+      this.obstacles.push({
+        minX: x - 0.75,
+        maxX: x + 0.75,
+        minZ: z - 0.75,
+        maxZ: z + 0.75,
+      });
     }
   }
 }

@@ -30,6 +30,25 @@ export class ChairSystem {
     for (const chair of this.chairs) chair.update(delta);
   }
 
+  finalizeLandings(): void {
+    for (const chair of this.chairs) {
+      if (chair.pendingLanding && chair.state === 'thrown') chair.land();
+    }
+  }
+
+  resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
+    const blockingDistance = CONFIG.player.radius + 0.58;
+    for (const chair of this.chairs) {
+      if (chair.state !== 'idle') continue;
+      const dx = position.x - chair.group.position.x;
+      const dz = position.z - chair.group.position.z;
+      if (dx * dx + dz * dz < blockingDistance * blockingDistance) {
+        position.copy(previous);
+        return;
+      }
+    }
+  }
+
   handlePlayerAction(player: Player): 'picked-up' | 'thrown' | 'none' {
     if (this.playerChair) {
       this.playerChair.group.position.copy(player.aimOrigin).addScaledVector(player.facing, 1.2);
