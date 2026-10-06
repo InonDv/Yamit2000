@@ -48,7 +48,8 @@ export class NpcSystem {
         npc.reactionTimer = 0.55;
       } else if (npc.reaction === 'aiming') {
         npc.reactionTimer -= delta;
-        npc.group.lookAt(player.group.position.x, npc.group.position.y, player.group.position.z);
+        const directionToPlayer = player.group.position.clone().sub(npc.group.position);
+        npc.group.rotation.y = Math.atan2(-directionToPlayer.x, -directionToPlayer.z);
         if (npc.reactionTimer <= 0) this.throwAtPlayer(npc, player);
       }
     }
