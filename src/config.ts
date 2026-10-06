@@ -29,6 +29,7 @@ export const CONFIG = {
   npc: {
     walkSpeed: 2,
     radius: 0.75,
+    chairReactionRadius: 2.35,
     fallDuration: 0.38,
     downDuration: 0.85,
     getUpDuration: 0.65,

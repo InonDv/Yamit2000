@@ -1,4 +1,5 @@
 import { CONFIG } from '../config';
+import type { Npc } from '../entities/Npc';
 import type { Player } from '../entities/Player';
 import type { ChairSystem } from './ChairSystem';
 import type { NpcSystem } from './NpcSystem';
@@ -21,27 +22,48 @@ export class CollisionSystem {
       }
 
       if (chair.owner === 'player') {
+        let threatenedNpc: Npc | null = null;
+        let nearestDistanceSquared = Number.POSITIVE_INFINITY;
+        const reactionDistance =
+          CONFIG.chair.collisionRadius + CONFIG.npc.chairReactionRadius;
+
         for (const npc of this.npcs.npcs) {
-          const hitDistance = CONFIG.chair.collisionRadius + CONFIG.npc.radius;
           const npcCenter = npc.group.position.clone();
           npcCenter.y += 1.1;
-          if (
-            this.segmentDistanceSquared(
-              chair.previousPosition,
-              chair.group.position,
-              npcCenter,
-            ) > hitDistance * hitDistance
-          ) {
-            continue;
-          }
-          const reacted = npc.registerHit();
-          chair.land();
-          this.onMessage(
-            reacted
-              ? 'Direct hit! The NPC is down — and will retaliate!'
-              : 'Chair hit!',
+          const distanceSquared = this.segmentDistanceSquared(
+            chair.previousPosition,
+            chair.group.position,
+            npcCenter,
           );
-          break;
+          if (
+            distanceSquared <= reactionDistance * reactionDistance &&
+            distanceSquared < nearestDistanceSquared
+          ) {
+            threatenedNpc = npc;
+            nearestDistanceSquared = distanceSquared;
+          }
+        }
+
+        if (threatenedNpc) {
+          const physicalHitDistance =
+            CONFIG.chair.collisionRadius + CONFIG.npc.radius;
+          const directHit =
+            nearestDistanceSquared <= physicalHitDistance * physicalHitDistance;
+          const reacted = directHit
+            ? threatenedNpc.registerHit()
+            : threatenedNpc.registerThreat();
+          if (directHit) {
+            chair.land();
+          }
+          if (reacted) {
+            this.onMessage(
+              directHit
+                ? 'Direct hit! The NPC is down — and will retaliate!'
+                : 'Near miss! That NPC saw the chair and will retaliate!',
+            );
+          } else if (directHit) {
+            this.onMessage('Chair hit!');
+          }
         }
       } else if (chair.owner?.startsWith('npc-')) {
         const hitDistance = CONFIG.chair.collisionRadius + CONFIG.player.radius;

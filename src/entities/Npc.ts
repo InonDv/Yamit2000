@@ -95,6 +95,18 @@ export class Npc {
     return true;
   }
 
+  registerThreat(): boolean {
+    if (this.reaction !== 'calm') return false;
+    this.figure.resetPose();
+    if (this.mode === 'sunbathing') {
+      this.figure.group.position.set(0, 0, 0);
+      this.figure.group.rotation.set(0, 0, 0);
+    }
+    this.reaction = 'finding-chair';
+    this.reactionTimer = CONFIG.npc.retaliationDelay;
+    return true;
+  }
+
   private updateKnockdown(delta: number): boolean {
     if (this.reaction === 'falling') {
       this.reactionTimer = Math.max(0, this.reactionTimer - delta);
