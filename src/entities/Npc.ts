@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { COLORS, CONFIG } from '../config';
 import { HumanFigure } from './HumanFigure';
 
+const NPC_NAMES = ['נהוראי', 'אלירן', 'אבי', 'יוסי', 'נתי'] as const;
+
 export type NpcMode = 'walking' | 'sunbathing';
 export type NpcReaction =
   | 'calm'
@@ -31,10 +33,13 @@ export class Npc {
     position: THREE.Vector3,
   ) {
     this.id = `npc-${id}`;
+    const displayName = NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)];
     this.figure = new HumanFigure({
       shirtColor: mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather,
       pantsColor: id % 2 === 0 ? 0x0f766e : 0x334155,
       skinColor: [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
+      frontText: displayName,
+      backText: displayName,
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);

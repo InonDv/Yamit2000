@@ -7,6 +7,7 @@ interface HumanFigureOptions {
   baseballCap?: boolean;
   sleeveless?: boolean;
   nikeBranding?: boolean;
+  frontText?: string;
   backText?: string;
   knife?: boolean;
 }
@@ -93,8 +94,15 @@ export class HumanFigure {
       this.group.add(chestLogo);
     }
 
+    if (options.frontText) {
+      const frontLabel = this.createShirtLabel(options.frontText);
+      frontLabel.position.set(0, 1.48, -0.28);
+      frontLabel.rotation.y = Math.PI;
+      this.group.add(frontLabel);
+    }
+
     if (options.backText) {
-      const backLabel = this.createBackLabel(options.backText);
+      const backLabel = this.createShirtLabel(options.backText);
       backLabel.position.set(0, 1.48, 0.28);
       this.group.add(backLabel);
     }
@@ -290,7 +298,7 @@ export class HumanFigure {
     return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
   }
 
-  private createBackLabel(text: string): THREE.Mesh {
+  private createShirtLabel(text: string): THREE.Mesh {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 320;
