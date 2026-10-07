@@ -32,8 +32,7 @@ export const CONFIG = {
     ownerImmunity: 0.4,
   },
   npc: {
-    walkSpeed: 3.3,
-    chaseSpeed: 5.8,
+    walkSpeed: 2,
     giantRunSpeed: 7.2,
     radius: 0.75,
     chairReactionRadius: 2.35,
@@ -42,11 +41,8 @@ export const CONFIG = {
     getUpDuration: 0.65,
     retaliationDelay: 0.8,
     chairSearchRange: 12,
-    ambientThrowMinDelay: 2.2,
-    ambientThrowMaxDelay: 4.4,
-    stabRange: 2.2,
-    maxAmbientStabbers: 2,
-    maxAmbientThrowers: 2,
+    ambientThrowMinDelay: 3.5,
+    ambientThrowMaxDelay: 7,
   },
 } as const;
 
