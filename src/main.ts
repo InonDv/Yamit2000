@@ -117,7 +117,7 @@ function animate(): void {
     if (punch?.reacted) {
       audio.playPunch();
       if (punch.informerDown) audio.playShemo();
-      else audio.playNoten();
+      else audio.playYerushalaim();
       if (punch.informerDown) {
         showMessage(
           punch.allInformersDown
