@@ -84,8 +84,20 @@ export class InputController {
     this.pointerDeltaY = 0;
   };
 
-  private readonly onPointerDown = (): void => {
-    this.element.requestPointerLock?.();
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    if (
+      event.pointerType !== 'mouse' ||
+      !window.matchMedia('(pointer: fine)').matches
+    ) {
+      return;
+    }
+    try {
+      void Promise.resolve(this.element.requestPointerLock?.()).catch(() => {
+        // Pointer lock is optional; keyboard camera controls remain available.
+      });
+    } catch {
+      // Some browsers expose the API but reject it synchronously.
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {

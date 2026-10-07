@@ -43,6 +43,31 @@ export class TouchControls {
 
     const lookZone = root.querySelector<HTMLElement>('#touch-look-zone');
     if (lookZone) this.bindLookZone(lookZone);
+
+    const reset = (): void => {
+      root.querySelectorAll<HTMLButtonElement>('[data-touch-key]').forEach((button) => {
+        const code = button.dataset.touchKey;
+        if (code) this.input.setVirtualKey(code, false);
+        button.classList.remove('is-pressed');
+      });
+      this.lookPointerId = null;
+      lookZone?.classList.remove('is-looking');
+    };
+    const resetWhenHidden = (): void => {
+      if (document.hidden) reset();
+    };
+    const preventContextMenu = (event: Event): void => event.preventDefault();
+    window.addEventListener('blur', reset);
+    window.addEventListener('pagehide', reset);
+    document.addEventListener('visibilitychange', resetWhenHidden);
+    root.addEventListener('contextmenu', preventContextMenu);
+    this.cleanups.push(() => {
+      window.removeEventListener('blur', reset);
+      window.removeEventListener('pagehide', reset);
+      document.removeEventListener('visibilitychange', resetWhenHidden);
+      root.removeEventListener('contextmenu', preventContextMenu);
+      reset();
+    });
   }
 
   dispose(): void {
