@@ -13,6 +13,7 @@ export class CollisionSystem {
     private readonly onPlayerChairHit: (
       informerDown: boolean,
       directHit: boolean,
+      giantHit: boolean,
     ) => void,
     private readonly onNpcChairHitPlayer: () => void,
   ) {}
@@ -29,12 +30,13 @@ export class CollisionSystem {
       if (chair.owner === 'player') {
         let threatenedNpc: Npc | null = null;
         let nearestDistanceSquared = Number.POSITIVE_INFINITY;
-        const reactionDistance =
-          CONFIG.chair.collisionRadius + CONFIG.npc.chairReactionRadius;
 
         for (const npc of this.npcs.npcs) {
+          const reactionDistance =
+            CONFIG.chair.collisionRadius +
+            CONFIG.npc.chairReactionRadius * npc.characterScale;
           const npcCenter = npc.group.position.clone();
-          npcCenter.y += 1.1;
+          npcCenter.y += 1.1 * npc.characterScale;
           const distanceSquared = this.segmentDistanceSquared(
             chair.previousPosition,
             chair.group.position,
@@ -51,7 +53,8 @@ export class CollisionSystem {
 
         if (threatenedNpc) {
           const physicalHitDistance =
-            CONFIG.chair.collisionRadius + CONFIG.npc.radius;
+            CONFIG.chair.collisionRadius +
+            CONFIG.npc.radius * threatenedNpc.characterScale;
           const directHit =
             nearestDistanceSquared <= physicalHitDistance * physicalHitDistance;
           const attack = this.npcs.registerPlayerChairAttack(threatenedNpc);
@@ -59,9 +62,11 @@ export class CollisionSystem {
             chair.land();
           }
           if (directHit || attack.reacted) {
-            this.onPlayerChairHit(attack.informerDown, directHit);
+            this.onPlayerChairHit(attack.informerDown, directHit, attack.giantHit);
           }
-          if (attack.informerDown) {
+          if (attack.giantHit) {
+            this.onMessage("פגעת בערבי הצ'צ'ני!");
+          } else if (attack.informerDown) {
             this.onMessage(
               attack.allInformersDown
                 ? 'ברכות, הורדת את כל המלשינים!'

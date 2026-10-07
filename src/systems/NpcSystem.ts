@@ -8,6 +8,7 @@ import type { ChairSystem } from './ChairSystem';
 type PlayerAttackResult = {
   reacted: boolean;
   informerDown: boolean;
+  giantHit: boolean;
   allInformersDown: boolean;
 };
 
@@ -101,12 +102,22 @@ export class NpcSystem {
   }
 
   registerPlayerAttack(npc: Npc): PlayerAttackResult {
+    const giantHit = npc.characterScale > 1;
+    if (giantHit) {
+      return {
+        reacted: true,
+        informerDown: false,
+        giantHit: true,
+        allInformersDown: this.allInformersDown,
+      };
+    }
     const informerDown = npc.isInformer && !this.downInformers.has(npc.id);
     const reacted = this.registerAttack(npc, 'player', informerDown);
     if (reacted && informerDown) this.downInformers.add(npc.id);
     return {
       reacted,
       informerDown: reacted && informerDown,
+      giantHit: false,
       allInformersDown: this.allInformersDown,
     };
   }
@@ -131,7 +142,9 @@ export class NpcSystem {
     let nearest: Npc | null = null;
     let nearestDistance: number = CONFIG.player.punchRange;
     for (const npc of this.npcs) {
-      const distance = npc.group.position.distanceTo(player.group.position);
+      const distance =
+        npc.group.position.distanceTo(player.group.position) -
+        CONFIG.npc.radius * (npc.characterScale - 1);
       if (distance < nearestDistance) {
         nearest = npc;
         nearestDistance = distance;
@@ -141,6 +154,7 @@ export class NpcSystem {
       return {
         reacted: false,
         informerDown: false,
+        giantHit: false,
         allInformersDown: this.allInformersDown,
       };
     }

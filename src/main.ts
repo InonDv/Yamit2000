@@ -88,8 +88,10 @@ const collisions = new CollisionSystem(
   npcSystem,
   player,
   showMessage,
-  (informerDown, directHit) => {
-    if (informerDown) {
+  (informerDown, directHit, giantHit) => {
+    if (giantHit) {
+      audio.playShobidak();
+    } else if (informerDown) {
       audio.playShemo();
     } else {
       if (directHit) audio.playHeadshot();
@@ -134,13 +136,17 @@ function animate(): void {
   if (input.consumePressed('Space')) {
     const punch = !chairSystem.playerChair ? npcSystem.punchNearest(player) : null;
     if (punch?.reacted) {
-      if (punch.informerDown) {
+      if (punch.giantHit) {
+        audio.playShobidak();
+      } else if (punch.informerDown) {
         audio.playShemo();
       } else {
         audio.playPunch();
         audio.playNoten();
       }
-      if (punch.informerDown) {
+      if (punch.giantHit) {
+        showMessage("דקרת את הערבי הצ'צ'ני!");
+      } else if (punch.informerDown) {
         showMessage(
           punch.allInformersDown
             ? 'ברכות, הורדת את כל המלשינים!'

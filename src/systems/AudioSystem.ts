@@ -5,6 +5,7 @@ export class AudioSystem {
   private readonly ayaClip = this.createClip('./audio/aya.mp3');
   private readonly shemoClip = this.createClip('./audio/shemo.mp3');
   private readonly yerushalaimClip = this.createClip('./audio/yesrushalaim.mp3');
+  private readonly shobidakClip = this.createClip('./audio/shobidak.mp3');
 
   constructor() {
     window.addEventListener('pointerdown', this.unlock, { once: true });
@@ -94,6 +95,10 @@ export class AudioSystem {
     this.playClip(this.yerushalaimClip);
   }
 
+  playShobidak(): void {
+    this.playClip(this.shobidakClip);
+  }
+
   dispose(): void {
     window.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('keydown', this.unlock);
@@ -101,6 +106,7 @@ export class AudioSystem {
     this.ayaClip.pause();
     this.shemoClip.pause();
     this.yerushalaimClip.pause();
+    this.shobidakClip.pause();
     void this.context?.close();
   }
 
@@ -141,6 +147,7 @@ export class AudioSystem {
       this.ayaClip,
       this.shemoClip,
       this.yerushalaimClip,
+      this.shobidakClip,
     ]) {
       const wasMuted = clip.muted;
       clip.muted = true;
