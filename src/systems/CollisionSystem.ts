@@ -51,7 +51,7 @@ export class CollisionSystem {
             CONFIG.chair.collisionRadius + CONFIG.npc.radius;
           const directHit =
             nearestDistanceSquared <= physicalHitDistance * physicalHitDistance;
-          const attack = this.npcs.registerPlayerChairAttack(threatenedNpc, directHit);
+          const attack = this.npcs.registerPlayerChairAttack(threatenedNpc);
           if (directHit) {
             chair.land();
             this.onPlayerChairHit();
@@ -76,7 +76,7 @@ export class CollisionSystem {
         let hitNpc = false;
         const npcHitDistance = CONFIG.chair.collisionRadius + CONFIG.npc.radius;
         for (const npc of this.npcs.npcs) {
-          if (npc.id === chair.owner) continue;
+          if (npc.id === chair.owner || npc.isInformer) continue;
           const npcCenter = npc.group.position.clone();
           npcCenter.y += 1.1;
           if (

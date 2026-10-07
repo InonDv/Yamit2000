@@ -90,9 +90,8 @@ export class NpcSystem {
 
   registerPlayerChairAttack(
     npc: Npc,
-    directHit: boolean,
   ): { reacted: boolean; informerDown: boolean; allInformersDown: boolean } {
-    const informerDown = directHit && npc.isInformer && !this.downInformers.has(npc.id);
+    const informerDown = npc.isInformer && !this.downInformers.has(npc.id);
     const reacted = this.registerAttack(npc, 'player', informerDown);
     if (reacted && informerDown) this.downInformers.add(npc.id);
     return {
@@ -103,6 +102,10 @@ export class NpcSystem {
   }
 
   registerNpcAttack(npc: Npc, attackerId: string): boolean {
+    if (npc.isInformer) return false;
+    if (this.npcs.find((candidate) => candidate.id === attackerId)?.isInformer) {
+      return false;
+    }
     return this.registerAttack(npc, attackerId);
   }
 
@@ -148,7 +151,7 @@ export class NpcSystem {
   }
 
   private updateAmbientThrow(npc: Npc, delta: number): void {
-    if (npc.mode !== 'walking') return;
+    if (npc.mode !== 'walking' || npc.isInformer) return;
     const timer = (this.ambientTimers.get(npc.id) ?? this.randomAmbientDelay()) - delta;
     if (timer > 0) {
       this.ambientTimers.set(npc.id, timer);
@@ -158,7 +161,13 @@ export class NpcSystem {
     let target: Npc | null = null;
     let nearestDistance = Number.POSITIVE_INFINITY;
     for (const candidate of this.npcs) {
-      if (candidate.id === npc.id || candidate.reaction !== 'calm') continue;
+      if (
+        candidate.id === npc.id ||
+        candidate.isInformer ||
+        candidate.reaction !== 'calm'
+      ) {
+        continue;
+      }
       const distance = candidate.group.position.distanceToSquared(npc.group.position);
       if (distance < nearestDistance) {
         target = candidate;
