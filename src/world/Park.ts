@@ -402,10 +402,17 @@ export class Park {
       context.direction = 'rtl';
       context.fillText('ימית 2000', canvas.width / 2, canvas.height / 2);
 
-      const sign = new THREE.Mesh(
-        new THREE.PlaneGeometry(8, 2.5),
-        new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), side: THREE.DoubleSide }),
-      );
+      const sign = new THREE.Group();
+      const signGeometry = new THREE.PlaneGeometry(8, 2.5);
+      const signMaterial = new THREE.MeshBasicMaterial({
+        map: new THREE.CanvasTexture(canvas),
+      });
+      const front = new THREE.Mesh(signGeometry, signMaterial);
+      front.position.z = 0.01;
+      const back = new THREE.Mesh(signGeometry, signMaterial);
+      back.position.z = -0.01;
+      back.rotation.y = Math.PI;
+      sign.add(front, back);
       sign.position.set(x, y, z);
       const sideFacing = Math.abs(x) > 30;
       if (sideFacing) sign.rotation.y = Math.PI / 2;
