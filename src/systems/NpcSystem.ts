@@ -5,6 +5,12 @@ import { Npc, type NpcMode } from '../entities/Npc';
 import type { Player } from '../entities/Player';
 import type { ChairSystem } from './ChairSystem';
 
+type PlayerAttackResult = {
+  reacted: boolean;
+  informerDown: boolean;
+  allInformersDown: boolean;
+};
+
 export class NpcSystem {
   readonly npcs: Npc[] = [];
   private readonly totalInformers = 3;
@@ -84,13 +90,7 @@ export class NpcSystem {
     }
   }
 
-  registerPlayerAttack(npc: Npc): boolean {
-    return this.registerAttack(npc, 'player');
-  }
-
-  registerPlayerChairAttack(
-    npc: Npc,
-  ): { reacted: boolean; informerDown: boolean; allInformersDown: boolean } {
+  registerPlayerAttack(npc: Npc): PlayerAttackResult {
     const informerDown = npc.isInformer && !this.downInformers.has(npc.id);
     const reacted = this.registerAttack(npc, 'player', informerDown);
     if (reacted && informerDown) this.downInformers.add(npc.id);
@@ -99,6 +99,10 @@ export class NpcSystem {
       informerDown: reacted && informerDown,
       allInformersDown: this.allInformersDown,
     };
+  }
+
+  registerPlayerChairAttack(npc: Npc): PlayerAttackResult {
+    return this.registerPlayerAttack(npc);
   }
 
   registerNpcAttack(npc: Npc, attackerId: string): boolean {
@@ -113,7 +117,7 @@ export class NpcSystem {
     return this.downInformers.size === this.totalInformers;
   }
 
-  punchNearest(player: Player): boolean {
+  punchNearest(player: Player): PlayerAttackResult {
     let nearest: Npc | null = null;
     let nearestDistance: number = CONFIG.player.punchRange;
     for (const npc of this.npcs) {
@@ -123,9 +127,17 @@ export class NpcSystem {
         nearestDistance = distance;
       }
     }
-    if (!nearest || !this.registerPlayerAttack(nearest)) return false;
+    if (!nearest) {
+      return {
+        reacted: false,
+        informerDown: false,
+        allInformersDown: this.allInformersDown,
+      };
+    }
+    const attack = this.registerPlayerAttack(nearest);
+    if (!attack.reacted) return attack;
     player.punch();
-    return true;
+    return attack;
   }
 
   private registerAttack(

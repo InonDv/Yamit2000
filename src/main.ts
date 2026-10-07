@@ -109,10 +109,19 @@ function animate(): void {
   )}%`;
 
   if (input.consumePressed('Space')) {
-    if (!chairSystem.playerChair && npcSystem.punchNearest(player)) {
+    const punch = !chairSystem.playerChair ? npcSystem.punchNearest(player) : null;
+    if (punch?.reacted) {
       audio.playPunch();
       audio.playNoten();
-      showMessage('Punch! That NPC is getting back up to retaliate.');
+      if (punch.informerDown) {
+        showMessage(
+          punch.allInformersDown
+            ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+            : 'הורדת מלשין באגרוף! חפש את המלשינים שנשארו.',
+        );
+      } else {
+        showMessage('Punch! That NPC is getting back up to retaliate.');
+      }
     } else {
       const action = chairSystem.handlePlayerAction(player);
       if (action === 'picked-up') showMessage('Chair ready. Face an NPC and press Space!');
