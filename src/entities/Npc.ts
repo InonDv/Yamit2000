@@ -99,7 +99,6 @@ export class Npc {
   }
 
   registerHit(permanentKnockdown = false): boolean {
-    if (this.characterScale > 1) return false;
     if (
       permanentKnockdown &&
       !this.permanentKnockdown &&

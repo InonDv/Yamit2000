@@ -104,8 +104,9 @@ export class NpcSystem {
   registerPlayerAttack(npc: Npc): PlayerAttackResult {
     const giantHit = npc.characterScale > 1;
     if (giantHit) {
+      const reacted = this.registerAttack(npc, 'player', true);
       return {
-        reacted: true,
+        reacted,
         informerDown: false,
         giantHit: true,
         allInformersDown: this.allInformersDown,
@@ -127,7 +128,7 @@ export class NpcSystem {
   }
 
   registerNpcAttack(npc: Npc, attackerId: string): boolean {
-    if (npc.isInformer) return false;
+    if (npc.isInformer || npc.characterScale > 1) return false;
     if (this.npcs.find((candidate) => candidate.id === attackerId)?.isInformer) {
       return false;
     }
