@@ -164,6 +164,9 @@ function animate(): void {
   }
 
   npcSystem.update(delta, player);
+  if (npcSystem.consumeGiantInjection()) {
+    showMessage("הערבי הצ'צ'ני הזריק לך חיסון!");
+  }
   chairSystem.update(delta);
   collisions.update();
   chairSystem.finalizeLandings();

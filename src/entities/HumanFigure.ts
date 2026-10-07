@@ -10,6 +10,7 @@ interface HumanFigureOptions {
   frontText?: string;
   backText?: string;
   knife?: boolean;
+  syringe?: boolean;
 }
 
 export class HumanFigure {
@@ -61,6 +62,7 @@ export class HumanFigure {
       options.nikeBranding ?? false,
     );
     if (options.knife) this.addKnife();
+    if (options.syringe) this.addSyringe();
     this.createLeg(
       this.rightLeg,
       0.24,
@@ -131,6 +133,11 @@ export class HumanFigure {
 
   setPunchPose(amount: number): void {
     this.rightArm.rotation.x = amount * Math.PI * 0.52;
+  }
+
+  setInjectionPose(amount: number): void {
+    this.rightArm.rotation.x = amount * Math.PI * 0.58;
+    this.rightArm.rotation.z = -amount * 0.18;
   }
 
   private createArm(
@@ -270,6 +277,69 @@ export class HumanFigure {
     handle.castShadow = true;
     guard.castShadow = true;
     this.rightArm.add(handle, guard, blade);
+  }
+
+  private addSyringe(): void {
+    const barrelMaterial = new THREE.MeshStandardMaterial({
+      color: 0xdbeafe,
+      transparent: true,
+      opacity: 0.82,
+      roughness: 0.2,
+      metalness: 0.08,
+    });
+    const liquidMaterial = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.25,
+    });
+    const metalMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe2e8f0,
+      metalness: 0.8,
+      roughness: 0.18,
+    });
+    const plungerMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1e3a8a,
+      roughness: 0.55,
+    });
+
+    const syringe = new THREE.Group();
+    syringe.position.set(0, -1.18, -0.04);
+
+    const barrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.105, 0.105, 0.62, 16),
+      barrelMaterial,
+    );
+    const liquid = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.072, 0.072, 0.36, 12),
+      liquidMaterial,
+    );
+    liquid.position.y = -0.08;
+    const plunger = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 0.34, 10),
+      plungerMaterial,
+    );
+    plunger.position.y = 0.45;
+    const thumbRest = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.055, 0.16),
+      plungerMaterial,
+    );
+    thumbRest.position.y = 0.62;
+    const fingerRest = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.055, 0.16),
+      metalMaterial,
+    );
+    fingerRest.position.y = -0.33;
+    const needle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.016, 0.006, 0.62, 8),
+      metalMaterial,
+    );
+    needle.position.y = -0.64;
+
+    syringe.add(barrel, liquid, plunger, thumbRest, fingerRest, needle);
+    syringe.traverse((object) => {
+      if (object instanceof THREE.Mesh) object.castShadow = true;
+    });
+    this.rightArm.add(syringe);
   }
 
   private createNikeLogo(width: number, height: number, color: string): THREE.Mesh {

@@ -11,7 +11,9 @@ export type NpcReaction =
   | 'down'
   | 'getting-up'
   | 'finding-chair'
-  | 'aiming';
+  | 'aiming'
+  | 'chasing-player'
+  | 'injecting';
 
 export class Npc {
   readonly group = new THREE.Group();
@@ -49,6 +51,7 @@ export class Npc {
       skinColor: [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
       frontText: this.displayName,
       backText: this.displayName,
+      syringe: this.displayName === "ערבי צ'צ'ני",
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);
@@ -125,6 +128,28 @@ export class Npc {
     this.reaction = 'falling';
     this.reactionTimer = CONFIG.npc.fallDuration;
     return true;
+  }
+
+  chase(target: THREE.Vector3, delta: number): void {
+    const direction = target.clone().sub(this.group.position);
+    direction.y = 0;
+    if (direction.lengthSq() === 0) return;
+    direction.normalize();
+    this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
+    this.group.position.addScaledVector(direction, CONFIG.npc.walkSpeed * 1.35 * delta);
+    this.walkPhase += delta * 8;
+    this.figure.setWalkCycle(this.walkPhase, 0.55);
+  }
+
+  face(target: THREE.Vector3): void {
+    const direction = target.clone().sub(this.group.position);
+    direction.y = 0;
+    if (direction.lengthSq() === 0) return;
+    this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
+  }
+
+  setInjectionPose(amount: number): void {
+    this.figure.setInjectionPose(amount);
   }
 
   private updateKnockdown(delta: number): boolean {

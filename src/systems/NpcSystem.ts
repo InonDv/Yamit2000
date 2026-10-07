@@ -19,6 +19,8 @@ export class NpcSystem {
   private readonly retaliationChairs = new Map<string, Chair>();
   private readonly reactionTargets = new Map<string, 'player' | string>();
   private readonly ambientTimers = new Map<string, number>();
+  private readonly deliveredInjections = new Set<string>();
+  private giantInjectionEvent = false;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -68,7 +70,7 @@ export class NpcSystem {
       'walking',
       new THREE.Vector3(8, 0, -10),
       "ערבי צ'צ'ני",
-      2.7,
+      1.35,
       0xffffff,
     );
     this.npcs.push(giant);
@@ -78,6 +80,9 @@ export class NpcSystem {
   update(delta: number, player: Player): void {
     for (const npc of this.npcs) {
       npc.update(delta);
+      if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
+        continue;
+      }
       if (npc.reaction === 'calm') {
         this.updateAmbientThrow(npc, delta);
         continue;
@@ -104,7 +109,7 @@ export class NpcSystem {
   registerPlayerAttack(npc: Npc): PlayerAttackResult {
     const giantHit = npc.characterScale > 1;
     if (giantHit) {
-      const reacted = this.registerAttack(npc, 'player', true);
+      const reacted = this.registerAttack(npc, 'player');
       return {
         reacted,
         informerDown: false,
@@ -137,6 +142,12 @@ export class NpcSystem {
 
   get allInformersDown(): boolean {
     return this.downInformers.size === this.totalInformers;
+  }
+
+  consumeGiantInjection(): boolean {
+    if (!this.giantInjectionEvent) return false;
+    this.giantInjectionEvent = false;
+    return true;
   }
 
   punchNearest(player: Player): PlayerAttackResult {
@@ -223,6 +234,47 @@ export class NpcSystem {
     this.reactionTargets.set(npc.id, target.id);
     npc.reaction = 'aiming';
     npc.reactionTimer = 0.65;
+  }
+
+  private updateGiantRetaliation(npc: Npc, player: Player, delta: number): boolean {
+    if (npc.reaction === 'finding-chair') {
+      npc.reaction = 'chasing-player';
+      npc.reactionTimer = 0;
+      this.reactionTargets.delete(npc.id);
+      this.deliveredInjections.delete(npc.id);
+    }
+
+    if (npc.reaction === 'chasing-player') {
+      npc.face(player.group.position);
+      const distance = npc.group.position.distanceTo(player.group.position);
+      if (distance <= 2.25) {
+        npc.reaction = 'injecting';
+        npc.reactionTimer = 1;
+      } else {
+        npc.chase(player.group.position, delta);
+      }
+      return true;
+    }
+
+    if (npc.reaction === 'injecting') {
+      npc.face(player.group.position);
+      npc.reactionTimer = Math.max(0, npc.reactionTimer - delta);
+      const progress = 1 - npc.reactionTimer;
+      npc.setInjectionPose(Math.sin(progress * Math.PI));
+      if (progress >= 0.45 && !this.deliveredInjections.has(npc.id)) {
+        this.deliveredInjections.add(npc.id);
+        player.registerHit();
+        this.giantInjectionEvent = true;
+      }
+      if (npc.reactionTimer <= 0) {
+        npc.setInjectionPose(0);
+        npc.reaction = 'calm';
+        this.ambientTimers.delete(npc.id);
+      }
+      return true;
+    }
+
+    return false;
   }
 
   private getTargetPosition(npc: Npc, player: Player): THREE.Vector3 {
