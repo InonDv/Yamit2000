@@ -93,7 +93,7 @@ const collisions = new CollisionSystem(
       audio.playShemo();
     } else {
       audio.playHeadshot();
-      audio.playNoten();
+      audio.playYerushalaim();
     }
   },
   () => audio.playAya(),
@@ -136,7 +136,7 @@ function animate(): void {
     if (punch?.reacted) {
       audio.playPunch();
       if (punch.informerDown) audio.playShemo();
-      else audio.playYerushalaim();
+      else audio.playNoten();
       if (punch.informerDown) {
         showMessage(
           punch.allInformersDown
