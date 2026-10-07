@@ -20,9 +20,7 @@ export class NpcSystem {
   private readonly reactionTargets = new Map<string, 'player' | string>();
   private readonly ambientTimers = new Map<string, number>();
   private readonly deliveredInjections = new Set<string>();
-  private readonly deliveredStabs = new Set<string>();
   private giantInjectionEvent = false;
-  private playerStabEvents = 0;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -83,9 +81,6 @@ export class NpcSystem {
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
-        continue;
-      }
-      if (this.updateStabRetaliation(npc, player, delta)) {
         continue;
       }
       if (npc.reaction === 'calm') {
@@ -153,47 +148,6 @@ export class NpcSystem {
     if (!this.giantInjectionEvent) return false;
     this.giantInjectionEvent = false;
     return true;
-  }
-
-  consumePlayerStabs(): number {
-    const count = this.playerStabEvents;
-    this.playerStabEvents = 0;
-    return count;
-  }
-
-  rallyAgainstPlayer(player: Player, exclude: Npc): void {
-    const available = this.npcs
-      .filter((npc) => this.canRally(npc, exclude.id))
-      .sort(
-        (left, right) =>
-          left.group.position.distanceToSquared(player.group.position) -
-          right.group.position.distanceToSquared(player.group.position),
-      );
-    const stabbers = available.slice(0, CONFIG.npc.rallyStabbers);
-    const throwers = available.slice(
-      CONFIG.npc.rallyStabbers,
-      CONFIG.npc.rallyStabbers + CONFIG.npc.rallyThrowers,
-    );
-
-    for (const npc of stabbers) {
-      this.releaseHeldChair(npc);
-      npc.standUp();
-      npc.armForStab();
-      npc.reaction = 'chasing-stab';
-      npc.reactionTimer = 0;
-      this.reactionTargets.set(npc.id, 'player');
-      this.ambientTimers.delete(npc.id);
-      this.deliveredStabs.delete(npc.id);
-    }
-
-    for (const npc of throwers) {
-      this.releaseHeldChair(npc);
-      npc.standUp();
-      npc.reaction = 'finding-chair';
-      npc.reactionTimer = 0.15;
-      this.reactionTargets.set(npc.id, 'player');
-      this.ambientTimers.delete(npc.id);
-    }
   }
 
   punchNearest(player: Player): PlayerAttackResult {
@@ -280,60 +234,6 @@ export class NpcSystem {
     this.reactionTargets.set(npc.id, target.id);
     npc.reaction = 'aiming';
     npc.reactionTimer = 0.65;
-  }
-
-  private canRally(npc: Npc, excludeId: string): boolean {
-    if (npc.id === excludeId || npc.isInformer || npc.characterScale > 1) return false;
-    if (this.reactionTargets.get(npc.id) === 'player') return false;
-    return (
-      npc.reaction === 'calm' ||
-      npc.reaction === 'aiming' ||
-      npc.reaction === 'finding-chair'
-    );
-  }
-
-  private releaseHeldChair(npc: Npc): void {
-    const chair = this.retaliationChairs.get(npc.id);
-    if (!chair) return;
-    chair.group.position.copy(npc.group.position);
-    chair.land();
-    this.retaliationChairs.delete(npc.id);
-  }
-
-  private updateStabRetaliation(npc: Npc, player: Player, delta: number): boolean {
-    if (npc.reaction === 'chasing-stab') {
-      npc.face(player.group.position);
-      const distance = npc.group.position.distanceTo(player.group.position);
-      if (distance <= CONFIG.npc.stabRange) {
-        npc.reaction = 'stabbing';
-        npc.reactionTimer = 0.42;
-        this.deliveredStabs.delete(npc.id);
-      } else {
-        npc.chase(player.group.position, delta);
-      }
-      return true;
-    }
-
-    if (npc.reaction === 'stabbing') {
-      npc.face(player.group.position);
-      npc.reactionTimer = Math.max(0, npc.reactionTimer - delta);
-      const progress = 1 - npc.reactionTimer / 0.42;
-      npc.setStabPose(Math.sin(progress * Math.PI));
-      if (progress >= 0.45 && !this.deliveredStabs.has(npc.id)) {
-        this.deliveredStabs.add(npc.id);
-        player.registerHit();
-        this.playerStabEvents += 1;
-      }
-      if (npc.reactionTimer <= 0) {
-        npc.setStabPose(0);
-        npc.reaction = 'calm';
-        this.reactionTargets.delete(npc.id);
-        this.ambientTimers.set(npc.id, this.randomAmbientDelay());
-      }
-      return true;
-    }
-
-    return false;
   }
 
   private updateGiantRetaliation(npc: Npc, player: Player, delta: number): boolean {

@@ -72,7 +72,6 @@ export class CollisionSystem {
           if (directHit || attack.reacted) {
             this.onPlayerChairHit(attack.informerDown, directHit, attack.giantHit);
           }
-          this.npcs.rallyAgainstPlayer(this.player, threatenedNpc);
           if (attack.giantHit) {
             this.onMessage("פגעת בערבי הצ'צ'ני!");
           } else if (attack.informerDown) {

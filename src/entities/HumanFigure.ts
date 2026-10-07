@@ -22,7 +22,6 @@ export class HumanFigure {
   private readonly rightArm = new THREE.Group();
   private readonly leftLeg = new THREE.Group();
   private readonly rightLeg = new THREE.Group();
-  private hasKnife = false;
 
   constructor(options: HumanFigureOptions) {
     const skinMaterial = new THREE.MeshStandardMaterial({
@@ -63,7 +62,7 @@ export class HumanFigure {
       flipFlopMaterial,
       options.nikeBranding ?? false,
     );
-    if (options.knife) this.giveKnife();
+    if (options.knife) this.addKnife();
     if (options.syringe) this.addSyringe();
     this.createLeg(
       this.rightLeg,
@@ -137,12 +136,6 @@ export class HumanFigure {
 
   setPunchPose(amount: number): void {
     this.rightArm.rotation.x = amount * Math.PI * 0.52;
-  }
-
-  giveKnife(): void {
-    if (this.hasKnife) return;
-    this.hasKnife = true;
-    this.addKnife();
   }
 
   setInjectionPose(amount: number): void {

@@ -43,9 +43,6 @@ export const CONFIG = {
     chairSearchRange: 12,
     ambientThrowMinDelay: 3.5,
     ambientThrowMaxDelay: 7,
-    rallyStabbers: 3,
-    rallyThrowers: 3,
-    stabRange: 2.2,
   },
 } as const;
 
