@@ -88,11 +88,11 @@ const collisions = new CollisionSystem(
   npcSystem,
   player,
   showMessage,
-  (informerDown) => {
+  (informerDown, directHit) => {
     if (informerDown) {
       audio.playShemo();
     } else {
-      audio.playHeadshot();
+      if (directHit) audio.playHeadshot();
       audio.playYerushalaim();
     }
   },
