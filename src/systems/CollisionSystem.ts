@@ -10,7 +10,7 @@ export class CollisionSystem {
     private readonly npcs: NpcSystem,
     private readonly player: Player,
     private readonly onMessage: (message: string) => void,
-    private readonly onPlayerChairHit: () => void,
+    private readonly onPlayerChairHit: (informerDown: boolean) => void,
     private readonly onNpcChairHitPlayer: () => void,
   ) {}
 
@@ -54,7 +54,9 @@ export class CollisionSystem {
           const attack = this.npcs.registerPlayerChairAttack(threatenedNpc);
           if (directHit) {
             chair.land();
-            this.onPlayerChairHit();
+          }
+          if (directHit || attack.informerDown) {
+            this.onPlayerChairHit(attack.informerDown);
           }
           if (attack.informerDown) {
             this.onMessage(

@@ -2,6 +2,7 @@ export class AudioSystem {
   private context: AudioContext | null = null;
   private readonly notenClip = this.createClip('./audio/noten.mp3');
   private readonly ayaClip = this.createClip('./audio/aya.mp3');
+  private readonly shemoClip = this.createClip('./audio/shemo.mp3');
 
   constructor() {
     window.addEventListener('pointerdown', this.unlock, { once: true });
@@ -83,11 +84,16 @@ export class AudioSystem {
     this.playClip(this.ayaClip);
   }
 
+  playShemo(): void {
+    this.playClip(this.shemoClip);
+  }
+
   dispose(): void {
     window.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('keydown', this.unlock);
     this.notenClip.pause();
     this.ayaClip.pause();
+    this.shemoClip.pause();
     void this.context?.close();
   }
 

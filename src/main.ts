@@ -69,9 +69,13 @@ const collisions = new CollisionSystem(
   npcSystem,
   player,
   showMessage,
-  () => {
-    audio.playHeadshot();
-    audio.playNoten();
+  (informerDown) => {
+    if (informerDown) {
+      audio.playShemo();
+    } else {
+      audio.playHeadshot();
+      audio.playNoten();
+    }
   },
   () => audio.playAya(),
 );
@@ -112,7 +116,8 @@ function animate(): void {
     const punch = !chairSystem.playerChair ? npcSystem.punchNearest(player) : null;
     if (punch?.reacted) {
       audio.playPunch();
-      audio.playNoten();
+      if (punch.informerDown) audio.playShemo();
+      else audio.playNoten();
       if (punch.informerDown) {
         showMessage(
           punch.allInformersDown
