@@ -69,7 +69,11 @@ const collisions = new CollisionSystem(
   npcSystem,
   player,
   showMessage,
-  () => audio.playHeadshot(),
+  () => {
+    audio.playHeadshot();
+    audio.playNoten();
+  },
+  () => audio.playAya(),
 );
 const clock = new THREE.Clock();
 const previousPlayerPosition = new THREE.Vector3();
@@ -107,6 +111,7 @@ function animate(): void {
   if (input.consumePressed('Space')) {
     if (!chairSystem.playerChair && npcSystem.punchNearest(player)) {
       audio.playPunch();
+      audio.playNoten();
       showMessage('Punch! That NPC is getting back up to retaliate.');
     } else {
       const action = chairSystem.handlePlayerAction(player);

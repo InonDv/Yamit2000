@@ -1,5 +1,7 @@
 export class AudioSystem {
   private context: AudioContext | null = null;
+  private readonly notenClip = this.createClip('./audio/noten.mp3');
+  private readonly ayaClip = this.createClip('./audio/aya.mp3');
 
   constructor() {
     window.addEventListener('pointerdown', this.unlock, { once: true });
@@ -73,9 +75,19 @@ export class AudioSystem {
     thump.stop(context.currentTime + duration);
   }
 
+  playNoten(): void {
+    this.playClip(this.notenClip);
+  }
+
+  playAya(): void {
+    this.playClip(this.ayaClip);
+  }
+
   dispose(): void {
     window.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('keydown', this.unlock);
+    this.notenClip.pause();
+    this.ayaClip.pause();
     void this.context?.close();
   }
 
@@ -92,5 +104,18 @@ export class AudioSystem {
     }
     if (this.context.state === 'suspended') void this.context.resume();
     return this.context;
+  }
+
+  private createClip(source: string): HTMLAudioElement {
+    const clip = new Audio(source);
+    clip.preload = 'auto';
+    return clip;
+  }
+
+  private playClip(clip: HTMLAudioElement): void {
+    clip.currentTime = 0;
+    void clip.play().catch(() => {
+      // Browsers may block sound until the first touch, click, or key press.
+    });
   }
 }

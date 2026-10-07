@@ -11,6 +11,7 @@ export class CollisionSystem {
     private readonly player: Player,
     private readonly onMessage: (message: string) => void,
     private readonly onPlayerChairHit: () => void,
+    private readonly onNpcChairHitPlayer: () => void,
   ) {}
 
   update(): void {
@@ -105,6 +106,7 @@ export class CollisionSystem {
         ) {
           this.player.registerHit();
           chair.land();
+          this.onNpcChairHitPlayer();
           this.onMessage('Ouch! An NPC hit you with a chair.');
         }
       }
