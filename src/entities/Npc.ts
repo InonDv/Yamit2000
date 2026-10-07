@@ -35,6 +35,7 @@ export class Npc {
     readonly mode: NpcMode,
     position: THREE.Vector3,
     assignedName?: string,
+    readonly characterScale = 1,
   ) {
     this.id = `npc-${id}`;
     this.displayName =
@@ -49,6 +50,7 @@ export class Npc {
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);
+    this.group.scale.setScalar(characterScale);
 
     if (mode === 'sunbathing') {
       this.figure.group.position.set(0, 0.68, 1.05);
@@ -95,6 +97,7 @@ export class Npc {
   }
 
   registerHit(permanentKnockdown = false): boolean {
+    if (this.characterScale > 1) return false;
     if (
       permanentKnockdown &&
       !this.permanentKnockdown &&

@@ -62,6 +62,15 @@ export class NpcSystem {
         this.ambientTimers.set(npc.id, 2 + (index % 5) * 0.7);
       }
     });
+    const giant = new Npc(
+      placements.length,
+      'walking',
+      new THREE.Vector3(8, 0, -10),
+      "ערבי צ'צ'ני",
+      2.7,
+    );
+    this.npcs.push(giant);
+    this.scene.add(giant.group);
   }
 
   update(delta: number, player: Player): void {
@@ -163,7 +172,7 @@ export class NpcSystem {
   }
 
   private updateAmbientThrow(npc: Npc, delta: number): void {
-    if (npc.mode !== 'walking' || npc.isInformer) return;
+    if (npc.mode !== 'walking' || npc.isInformer || npc.characterScale > 1) return;
     const timer = (this.ambientTimers.get(npc.id) ?? this.randomAmbientDelay()) - delta;
     if (timer > 0) {
       this.ambientTimers.set(npc.id, timer);
@@ -176,6 +185,7 @@ export class NpcSystem {
       if (
         candidate.id === npc.id ||
         candidate.isInformer ||
+        candidate.characterScale > 1 ||
         candidate.reaction !== 'calm'
       ) {
         continue;
@@ -216,8 +226,9 @@ export class NpcSystem {
   }
 
   resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
-    const blockingDistance = CONFIG.player.radius + CONFIG.npc.radius;
     for (const npc of this.npcs) {
+      const blockingDistance =
+        CONFIG.player.radius + CONFIG.npc.radius * npc.characterScale;
       const dx = position.x - npc.group.position.x;
       const dz = position.z - npc.group.position.z;
       if (dx * dx + dz * dz < blockingDistance * blockingDistance) {
