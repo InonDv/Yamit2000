@@ -124,11 +124,13 @@ function animate(): void {
   messageTimer -= delta;
   if (messageTimer <= 0) {
     const nearest = chairSystem.findNearestIdle(player.group.position, CONFIG.chair.pickupRange);
-    statusElement.textContent = chairSystem.playerChair
-      ? 'Holding chair — Space to throw'
-      : nearest
-        ? 'Chair in range — Space to pick up'
-        : 'Find a white chair!';
+    statusElement.textContent = npcSystem.allInformersDown
+      ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+      : chairSystem.playerChair
+        ? 'Holding chair — Space to throw'
+        : nearest
+          ? 'Chair in range — Space to pick up'
+          : 'Find a white chair!';
   }
 
   renderer.render(scene, camera);

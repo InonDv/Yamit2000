@@ -16,6 +16,8 @@ export type NpcReaction =
 export class Npc {
   readonly group = new THREE.Group();
   readonly id: string;
+  readonly displayName: string;
+  readonly isInformer: boolean;
   reaction: NpcReaction = 'calm';
   reactionTimer = 0;
   hitCooldown = 0;
@@ -25,21 +27,25 @@ export class Npc {
   private readonly fallStartPosition = new THREE.Vector3();
   private fallStartRotationX = 0;
   private fallStartRotationZ = 0;
+  private permanentKnockdown = false;
   private walkPhase = Math.random() * Math.PI * 2;
 
   constructor(
     id: number,
     readonly mode: NpcMode,
     position: THREE.Vector3,
+    assignedName?: string,
   ) {
     this.id = `npc-${id}`;
-    const displayName = NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)];
+    this.displayName =
+      assignedName ?? NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)];
+    this.isInformer = this.displayName === 'מלשין';
     this.figure = new HumanFigure({
       shirtColor: mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather,
       pantsColor: id % 2 === 0 ? 0x0f766e : 0x334155,
       skinColor: [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
-      frontText: displayName,
-      backText: displayName,
+      frontText: this.displayName,
+      backText: this.displayName,
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);
@@ -88,7 +94,16 @@ export class Npc {
     this.figure.setWalkCycle(this.walkPhase, 0.5);
   }
 
-  registerHit(): boolean {
+  registerHit(permanentKnockdown = false): boolean {
+    if (
+      permanentKnockdown &&
+      !this.permanentKnockdown &&
+      (this.reaction === 'falling' || this.reaction === 'down')
+    ) {
+      this.permanentKnockdown = true;
+      this.hitCooldown = 0.6;
+      return true;
+    }
     if (
       this.hitCooldown > 0 ||
       this.reaction === 'falling' ||
@@ -98,6 +113,7 @@ export class Npc {
       return false;
     }
     this.hitCooldown = 0.6;
+    this.permanentKnockdown = permanentKnockdown;
     this.figure.resetPose();
     this.fallStartPosition.copy(this.figure.group.position);
     this.fallStartRotationX = this.figure.group.rotation.x;
@@ -145,6 +161,7 @@ export class Npc {
     }
 
     if (this.reaction === 'down') {
+      if (this.permanentKnockdown) return true;
       this.reactionTimer = Math.max(0, this.reactionTimer - delta);
       if (this.reactionTimer <= 0) {
         this.reaction = 'getting-up';

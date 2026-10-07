@@ -7,6 +7,8 @@ import type { ChairSystem } from './ChairSystem';
 
 export class NpcSystem {
   readonly npcs: Npc[] = [];
+  private readonly totalInformers = 3;
+  private readonly downInformers = new Set<string>();
   private readonly retaliationChairs = new Map<string, Chair>();
   private readonly reactionTargets = new Map<string, 'player' | string>();
   private readonly ambientTimers = new Map<string, number>();
@@ -37,8 +39,17 @@ export class NpcSystem {
       ['walking', 30, -28],
       ['walking', 2, -30],
     ];
+    const informerIndexes = new Set<number>();
+    while (informerIndexes.size < this.totalInformers) {
+      informerIndexes.add(THREE.MathUtils.randInt(0, placements.length - 1));
+    }
     placements.forEach(([mode, x, z], index) => {
-      const npc = new Npc(index, mode, new THREE.Vector3(x, 0, z));
+      const npc = new Npc(
+        index,
+        mode,
+        new THREE.Vector3(x, 0, z),
+        informerIndexes.has(index) ? 'מלשין' : undefined,
+      );
       this.npcs.push(npc);
       this.scene.add(npc.group);
       if (mode === 'walking') {
@@ -77,8 +88,26 @@ export class NpcSystem {
     return this.registerAttack(npc, 'player');
   }
 
+  registerPlayerChairAttack(
+    npc: Npc,
+    directHit: boolean,
+  ): { reacted: boolean; informerDown: boolean; allInformersDown: boolean } {
+    const informerDown = directHit && npc.isInformer && !this.downInformers.has(npc.id);
+    const reacted = this.registerAttack(npc, 'player', informerDown);
+    if (reacted && informerDown) this.downInformers.add(npc.id);
+    return {
+      reacted,
+      informerDown: reacted && informerDown,
+      allInformersDown: this.allInformersDown,
+    };
+  }
+
   registerNpcAttack(npc: Npc, attackerId: string): boolean {
     return this.registerAttack(npc, attackerId);
+  }
+
+  get allInformersDown(): boolean {
+    return this.downInformers.size === this.totalInformers;
   }
 
   punchNearest(player: Player): boolean {
@@ -96,8 +125,12 @@ export class NpcSystem {
     return true;
   }
 
-  private registerAttack(npc: Npc, target: 'player' | string): boolean {
-    const reacted = npc.registerHit();
+  private registerAttack(
+    npc: Npc,
+    target: 'player' | string,
+    permanentKnockdown = false,
+  ): boolean {
+    const reacted = npc.registerHit(permanentKnockdown);
     if (!reacted) return false;
     const heldChair = this.retaliationChairs.get(npc.id);
     if (heldChair) {
@@ -105,7 +138,12 @@ export class NpcSystem {
       heldChair.land();
       this.retaliationChairs.delete(npc.id);
     }
-    this.reactionTargets.set(npc.id, target);
+    if (permanentKnockdown) {
+      this.reactionTargets.delete(npc.id);
+      this.ambientTimers.delete(npc.id);
+    } else {
+      this.reactionTargets.set(npc.id, target);
+    }
     return true;
   }
 

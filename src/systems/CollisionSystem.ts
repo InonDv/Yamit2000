@@ -50,12 +50,18 @@ export class CollisionSystem {
             CONFIG.chair.collisionRadius + CONFIG.npc.radius;
           const directHit =
             nearestDistanceSquared <= physicalHitDistance * physicalHitDistance;
-          const reacted = this.npcs.registerPlayerAttack(threatenedNpc);
+          const attack = this.npcs.registerPlayerChairAttack(threatenedNpc, directHit);
           if (directHit) {
             chair.land();
             this.onPlayerChairHit();
           }
-          if (reacted) {
+          if (attack.informerDown) {
+            this.onMessage(
+              attack.allInformersDown
+                ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+                : 'הורדת מלשין! חפש את המלשינים שנשארו.',
+            );
+          } else if (attack.reacted) {
             this.onMessage(
               directHit
                 ? 'Direct hit! The NPC is down — and will retaliate!'
