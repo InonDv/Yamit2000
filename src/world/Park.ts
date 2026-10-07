@@ -378,7 +378,10 @@ export class Park {
   private createSigns(): void {
     const positions: Array<[number, number, number]> = [
       [0, 3, -36],
+      [0, 3, 36],
       [-35, 3, 5],
+      [-35, 3, -20],
+      [35, 3, 0],
       [34, 3, 27],
     ];
     for (const [x, y, z] of positions) {
@@ -396,7 +399,8 @@ export class Park {
       context.font = 'bold 64px sans-serif';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.fillText('YAMIT 2000', canvas.width / 2, canvas.height / 2);
+      context.direction = 'rtl';
+      context.fillText('ימית 2000', canvas.width / 2, canvas.height / 2);
 
       const sign = new THREE.Mesh(
         new THREE.PlaneGeometry(8, 2.5),
