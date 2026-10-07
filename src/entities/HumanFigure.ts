@@ -217,9 +217,9 @@ export class HumanFigure {
     brim.rotation.x = -0.08;
     this.group.add(crown, brim);
     if (nikeBranding) {
-      const frontCapLogo = this.createNikeLogo(0.2, 0.08, '#ffffff');
+      const frontCapLogo = this.createNikeLogo(0.45, 0.18, '#ffffff');
       frontCapLogo.position.set(0, 2.55, -0.34);
-      const backCapLogo = this.createNikeLogo(0.25, 0.1, '#ffffff');
+      const backCapLogo = this.createNikeLogo(0.5, 0.2, '#ffffff');
       backCapLogo.position.set(0, 2.55, 0.36);
       this.group.add(frontCapLogo, backCapLogo);
     }
