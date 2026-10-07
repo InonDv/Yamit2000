@@ -14,7 +14,7 @@ export class Player {
     baseballCap: true,
     sleeveless: true,
     nikeBranding: true,
-    backText: 'יקיר הגבר',
+    backText: 'בחור טוב',
     knife: true,
   });
   private readonly bodyMaterial = this.figure.shirtMaterial;
