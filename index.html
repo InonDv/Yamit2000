@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7dd3fc" />
     <title>Yamit 2000</title>
-    <script type="module" crossorigin src="./assets/index-VzDVF_wr.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-De_--2dz.css">
+    <script type="module" crossorigin src="./assets/index-DeKbWxg0.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BjyrfQSE.css">
   </head>
   <body>
     <div id="app"></div>
     <aside id="hud">
-      <h1 dir="rtl">תפוס כיסא ותוריד מלשין</h1>
+      <h1 dir="rtl">מצא והורד את כל המלשינים</h1>
       <p>W/S: move · A/D: aim</p>
       <p>Arrow keys / Mouse: camera</p>
       <p>Space: punch / pick up / throw</p>
@@ -29,6 +29,13 @@
         <button class="touch-down" data-touch-key="KeyS" aria-label="Move backward">▼</button>
       </div>
       <button id="touch-action" data-touch-key="Space" aria-label="תפוס">תפוס</button>
+    </div>
+    <div id="victory-screen" hidden>
+      <section class="victory-card" dir="rtl" aria-labelledby="victory-title">
+        <h2 id="victory-title">ברכות!</h2>
+        <p>שלחת את כל המלשינים לקבורה בפרדס</p>
+        <button id="restart-game" type="button">התחל משחק חדש</button>
+      </section>
     </div>
   </body>
 </html>
