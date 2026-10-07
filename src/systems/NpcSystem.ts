@@ -376,6 +376,13 @@ export class NpcSystem {
 
   resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
     for (const npc of this.npcs) {
+      if (
+        npc.reaction === 'falling' ||
+        npc.reaction === 'down' ||
+        npc.reaction === 'getting-up'
+      ) {
+        continue;
+      }
       const blockingDistance =
         CONFIG.player.radius + CONFIG.npc.radius * npc.characterScale;
       const dx = position.x - npc.group.position.x;

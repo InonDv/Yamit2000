@@ -112,7 +112,6 @@ function animate(): void {
   park.update(delta);
   park.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   npcSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
-  chairSystem.resolvePlayerPosition(player.group.position, previousPlayerPosition);
   followCamera.update(delta, player.group.position, input);
   camera.getWorldDirection(cameraFacing);
   player.faceDirection(cameraFacing);
