@@ -21,6 +21,7 @@ export class Player {
   private readonly bodyMaterial = this.figure.shirtMaterial;
   private walkPhase = 0;
   private punchTimer = 0;
+  private injectionKnockdownTimer = 0;
 
   constructor() {
     this.group.add(this.figure.group);
@@ -28,24 +29,28 @@ export class Player {
   }
 
   update(delta: number, input: InputController): void {
-    const move =
-      Number(input.isHeld('KeyW')) - Number(input.isHeld('KeyS'));
-
-    if (move !== 0) {
-      this.group.position.addScaledVector(
-        this.facing,
-        move * CONFIG.player.moveSpeed * delta,
-      );
-      this.walkPhase += delta * 10;
-      this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
+    if (this.injectionKnockdownTimer > 0) {
+      this.updateInjectionKnockdown(delta);
     } else {
-      this.figure.resetPose();
-    }
+      const move =
+        Number(input.isHeld('KeyW')) - Number(input.isHeld('KeyS'));
 
-    if (this.punchTimer > 0) {
-      this.punchTimer = Math.max(0, this.punchTimer - delta);
-      const progress = 1 - this.punchTimer / CONFIG.player.punchDuration;
-      this.figure.setPunchPose(Math.sin(progress * Math.PI));
+      if (move !== 0) {
+        this.group.position.addScaledVector(
+          this.facing,
+          move * CONFIG.player.moveSpeed * delta,
+        );
+        this.walkPhase += delta * 10;
+        this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
+      } else {
+        this.figure.resetPose();
+      }
+
+      if (this.punchTimer > 0) {
+        this.punchTimer = Math.max(0, this.punchTimer - delta);
+        const progress = 1 - this.punchTimer / CONFIG.player.punchDuration;
+        this.figure.setPunchPose(Math.sin(progress * Math.PI));
+      }
     }
 
     const limit = CONFIG.world.halfSize - 1;
@@ -62,6 +67,7 @@ export class Player {
   }
 
   faceDirection(direction: THREE.Vector3): void {
+    if (this.isKnockedDown) return;
     direction.y = 0;
     if (direction.lengthSq() === 0) return;
     this.facing.copy(direction).normalize();
@@ -72,11 +78,46 @@ export class Player {
     this.hitFlash = 0.7;
   }
 
+  registerInjection(): void {
+    this.registerHit();
+    this.injectionKnockdownTimer = CONFIG.player.injectionKnockdownDuration;
+    this.punchTimer = 0;
+    this.figure.resetPose();
+  }
+
   punch(): void {
     this.punchTimer = CONFIG.player.punchDuration;
   }
 
+  get isKnockedDown(): boolean {
+    return this.injectionKnockdownTimer > 0;
+  }
+
   get aimOrigin(): THREE.Vector3 {
     return this.group.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+  }
+
+  private updateInjectionKnockdown(delta: number): void {
+    const duration = CONFIG.player.injectionKnockdownDuration;
+    this.injectionKnockdownTimer = Math.max(0, this.injectionKnockdownTimer - delta);
+    const elapsed = duration - this.injectionKnockdownTimer;
+    const fallProgress = THREE.MathUtils.clamp(elapsed / 0.35, 0, 1);
+    const riseProgress = THREE.MathUtils.clamp(this.injectionKnockdownTimer / 0.45, 0, 1);
+    const downAmount = Math.min(fallProgress, riseProgress);
+    const rollProgress = THREE.MathUtils.clamp(
+      (elapsed - 0.35) / (duration - 0.8),
+      0,
+      1,
+    );
+
+    this.figure.group.rotation.x = -Math.PI * 0.5 * downAmount;
+    this.figure.group.rotation.y = Math.PI * 6 * rollProgress * downAmount;
+    this.figure.group.position.set(0, 0.28 * downAmount, 0.85 * downAmount);
+
+    if (this.injectionKnockdownTimer <= 0) {
+      this.figure.group.position.set(0, 0, 0);
+      this.figure.group.rotation.set(0, 0, 0);
+      this.figure.resetPose();
+    }
   }
 }

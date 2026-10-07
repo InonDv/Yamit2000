@@ -263,7 +263,7 @@ export class NpcSystem {
       npc.setInjectionPose(Math.sin(progress * Math.PI));
       if (progress >= 0.45 && !this.deliveredInjections.has(npc.id)) {
         this.deliveredInjections.add(npc.id);
-        player.registerHit();
+        player.registerInjection();
         this.giantInjectionEvent = true;
       }
       if (npc.reactionTimer <= 0) {

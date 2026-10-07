@@ -133,7 +133,7 @@ function animate(): void {
     97,
   )}%`;
 
-  if (input.consumePressed('Space')) {
+  if (input.consumePressed('Space') && !player.isKnockedDown) {
     const punch = !chairSystem.playerChair ? npcSystem.punchNearest(player) : null;
     if (punch?.reacted) {
       if (punch.giantHit) {
