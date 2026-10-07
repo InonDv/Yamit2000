@@ -15,7 +15,16 @@ const app = document.querySelector<HTMLDivElement>('#app');
 const status = document.querySelector<HTMLElement>('#status');
 const crosshair = document.querySelector<HTMLElement>('#crosshair');
 const touchControlsRoot = document.querySelector<HTMLElement>('#touch-controls');
-if (!app || !status || !crosshair || !touchControlsRoot) {
+const victoryScreen = document.querySelector<HTMLElement>('#victory-screen');
+const restartButton = document.querySelector<HTMLButtonElement>('#restart-game');
+if (
+  !app ||
+  !status ||
+  !crosshair ||
+  !touchControlsRoot ||
+  !victoryScreen ||
+  !restartButton
+) {
   throw new Error('Game UI failed to initialize.');
 }
 const statusElement = status;
@@ -60,10 +69,20 @@ sun.shadow.camera.bottom = -45;
 scene.add(sun);
 
 let messageTimer = 0;
+let victoryShown = false;
 const showMessage = (message: string, seconds = 2.4): void => {
   statusElement.textContent = message;
   messageTimer = seconds;
 };
+const showVictory = (): void => {
+  if (victoryShown) return;
+  victoryShown = true;
+  victoryScreen.hidden = false;
+  if (document.pointerLockElement) void document.exitPointerLock();
+  restartButton.focus();
+};
+const restartGame = (): void => window.location.reload();
+restartButton.addEventListener('click', restartGame);
 const collisions = new CollisionSystem(
   chairSystem,
   npcSystem,
@@ -139,6 +158,7 @@ function animate(): void {
   chairSystem.update(delta);
   collisions.update();
   chairSystem.finalizeLandings();
+  if (npcSystem.allInformersDown) showVictory();
 
   messageTimer -= delta;
   if (messageTimer <= 0) {
@@ -167,14 +187,10 @@ window.addEventListener('beforeunload', () => {
   input.dispose();
   touchControls.dispose();
   audio.dispose();
+  restartButton.removeEventListener('click', restartGame);
   renderer.dispose();
 });
 
 followCamera.update(1, player.group.position, input);
-showMessage(
-  touchControlsRoot.hidden
-    ? 'Click the park, then use the controls to explore.'
-    : 'Use the on-screen controls to explore the park.',
-  4,
-);
+showMessage('מצא והורד את כל המלשינים', 4);
 animate();
