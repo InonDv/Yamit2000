@@ -5,6 +5,8 @@ export class TouchControls {
   private lookPointerId: number | null = null;
   private lastLookX = 0;
   private lastLookY = 0;
+  private joystickPointerId: number | null = null;
+  private resetJoystick: (() => void) | null = null;
 
   constructor(
     root: HTMLElement,
@@ -43,6 +45,9 @@ export class TouchControls {
 
     const lookZone = root.querySelector<HTMLElement>('#touch-look-zone');
     if (lookZone) this.bindLookZone(lookZone);
+    const joystick = root.querySelector<HTMLElement>('#touch-joystick');
+    const joystickKnob = root.querySelector<HTMLElement>('#touch-joystick-knob');
+    if (joystick && joystickKnob) this.bindJoystick(joystick, joystickKnob);
 
     const reset = (): void => {
       root.querySelectorAll<HTMLButtonElement>('[data-touch-key]').forEach((button) => {
@@ -52,6 +57,7 @@ export class TouchControls {
       });
       this.lookPointerId = null;
       lookZone?.classList.remove('is-looking');
+      this.resetJoystick?.();
     };
     const resetWhenHidden = (): void => {
       if (document.hidden) reset();
@@ -72,6 +78,71 @@ export class TouchControls {
 
   dispose(): void {
     for (const cleanup of this.cleanups) cleanup();
+  }
+
+  private bindJoystick(zone: HTMLElement, knob: HTMLElement): void {
+    const releaseKeys = (): void => {
+      for (const code of ['KeyW', 'KeyA', 'KeyS', 'KeyD']) {
+        this.input.setVirtualKey(code, false);
+      }
+    };
+    const reset = (): void => {
+      this.joystickPointerId = null;
+      knob.style.transform = 'translate(0px, 0px)';
+      zone.classList.remove('is-active');
+      releaseKeys();
+    };
+    const update = (event: PointerEvent): void => {
+      const bounds = zone.getBoundingClientRect();
+      const radius = bounds.width * 0.31;
+      let x = event.clientX - (bounds.left + bounds.width / 2);
+      let y = event.clientY - (bounds.top + bounds.height / 2);
+      const distance = Math.hypot(x, y);
+      if (distance > radius) {
+        const scale = radius / distance;
+        x *= scale;
+        y *= scale;
+      }
+      knob.style.transform = `translate(${x}px, ${y}px)`;
+      const threshold = radius * 0.28;
+      this.input.setVirtualKey('KeyW', y < -threshold);
+      this.input.setVirtualKey('KeyS', y > threshold);
+      this.input.setVirtualKey('KeyA', x < -threshold);
+      this.input.setVirtualKey('KeyD', x > threshold);
+    };
+    const start = (event: PointerEvent): void => {
+      if (this.joystickPointerId !== null) return;
+      event.preventDefault();
+      this.joystickPointerId = event.pointerId;
+      zone.setPointerCapture(event.pointerId);
+      zone.classList.add('is-active');
+      update(event);
+    };
+    const move = (event: PointerEvent): void => {
+      if (event.pointerId !== this.joystickPointerId) return;
+      event.preventDefault();
+      update(event);
+    };
+    const finish = (event: PointerEvent): void => {
+      if (event.pointerId !== this.joystickPointerId) return;
+      event.preventDefault();
+      reset();
+    };
+    this.resetJoystick = reset;
+    zone.addEventListener('pointerdown', start);
+    zone.addEventListener('pointermove', move);
+    zone.addEventListener('pointerup', finish);
+    zone.addEventListener('pointercancel', finish);
+    zone.addEventListener('lostpointercapture', finish);
+    this.cleanups.push(() => {
+      zone.removeEventListener('pointerdown', start);
+      zone.removeEventListener('pointermove', move);
+      zone.removeEventListener('pointerup', finish);
+      zone.removeEventListener('pointercancel', finish);
+      zone.removeEventListener('lostpointercapture', finish);
+      reset();
+      if (this.resetJoystick === reset) this.resetJoystick = null;
+    });
   }
 
   private bindLookZone(zone: HTMLElement): void {

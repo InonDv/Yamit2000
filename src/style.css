@@ -107,17 +107,46 @@ canvas {
   opacity: 0.2;
 }
 
-.touch-dpad {
+#touch-joystick {
   position: absolute;
   z-index: 2;
   bottom: max(1rem, env(safe-area-inset-bottom));
   left: max(1rem, env(safe-area-inset-left));
-  display: grid;
-  grid-template: repeat(3, 3.8rem) / repeat(3, 3.8rem);
-  pointer-events: none;
+  width: 8rem;
+  height: 8rem;
+  border: 3px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: rgb(3 43 75 / 38%);
+  box-shadow: inset 0 0 1.2rem rgb(0 0 0 / 20%), 0 0.5rem 1.2rem rgb(0 0 0 / 18%);
+  touch-action: none;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.touch-dpad button,
+#touch-joystick.is-active {
+  border-color: rgb(125 211 252 / 90%);
+  background: rgb(3 43 75 / 52%);
+}
+
+#touch-joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.4rem;
+  height: 3.4rem;
+  margin: -1.7rem 0 0 -1.7rem;
+  border: 2px solid rgb(255 255 255 / 78%);
+  border-radius: 50%;
+  background: rgb(14 165 233 / 82%);
+  box-shadow: 0 0.45rem 1rem rgb(0 0 0 / 28%);
+  pointer-events: none;
+  transition: transform 70ms ease-out;
+}
+
+#touch-joystick.is-active #touch-joystick-knob {
+  transition: none;
+}
+
 #touch-action {
   border: 2px solid rgb(255 255 255 / 62%);
   color: #fff;
@@ -129,32 +158,9 @@ canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
-.touch-dpad button {
-  width: 3.45rem;
-  height: 3.45rem;
-  border-radius: 1rem;
-}
-
-.touch-dpad button.is-pressed,
 #touch-action.is-pressed {
   background: rgb(14 165 233 / 82%);
   transform: scale(0.94);
-}
-
-.touch-up {
-  grid-area: 1 / 2;
-}
-
-.touch-left {
-  grid-area: 2 / 1;
-}
-
-.touch-right {
-  grid-area: 2 / 3;
-}
-
-.touch-down {
-  grid-area: 3 / 2;
 }
 
 #touch-action {
