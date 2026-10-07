@@ -13,7 +13,9 @@ export type NpcReaction =
   | 'finding-chair'
   | 'aiming'
   | 'chasing-player'
-  | 'injecting';
+  | 'injecting'
+  | 'chasing-stab'
+  | 'stabbing';
 
 export class Npc {
   readonly group = new THREE.Group();
@@ -31,6 +33,7 @@ export class Npc {
   private fallStartRotationZ = 0;
   private permanentKnockdown = false;
   private walkPhase = Math.random() * Math.PI * 2;
+  private mobile = false;
 
   constructor(
     id: number,
@@ -84,8 +87,8 @@ export class Npc {
 
     if (this.updateKnockdown(delta)) return;
 
-    if (this.mode !== 'walking' || this.reaction !== 'calm') {
-      if (this.mode === 'walking') this.figure.resetPose();
+    if (!this.canWander || this.reaction !== 'calm') {
+      if (this.canWander) this.figure.resetPose();
       return;
     }
     const direction = this.target.clone().sub(this.group.position);
@@ -150,6 +153,26 @@ export class Npc {
 
   setInjectionPose(amount: number): void {
     this.figure.setInjectionPose(amount);
+  }
+
+  setStabPose(amount: number): void {
+    this.figure.setPunchPose(amount);
+  }
+
+  armForStab(): void {
+    this.figure.giveKnife();
+  }
+
+  standUp(): void {
+    this.figure.group.position.set(0, 0, 0);
+    this.figure.group.rotation.x = 0;
+    this.figure.group.rotation.z = 0;
+    this.figure.resetPose();
+    this.mobile = true;
+  }
+
+  private get canWander(): boolean {
+    return this.mode === 'walking' || this.mobile;
   }
 
   private updateKnockdown(delta: number): boolean {

@@ -164,6 +164,11 @@ function animate(): void {
   }
 
   npcSystem.update(delta, player);
+  const stabHits = npcSystem.consumePlayerStabs();
+  if (stabHits > 0) {
+    for (let index = 0; index < stabHits; index += 1) audio.playPunch();
+    showMessage('דקרו אותך!');
+  }
   if (npcSystem.consumeGiantInjection()) {
     audio.playMorgen();
     showMessage("הערבי הצ'צ'ני הזריק לך חיסון!");
