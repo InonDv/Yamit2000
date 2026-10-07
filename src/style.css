@@ -22,6 +22,7 @@ body,
 canvas {
   display: block;
   cursor: crosshair;
+  touch-action: none;
 }
 
 #hud {
@@ -70,12 +71,122 @@ canvas {
   pointer-events: none;
 }
 
-@media (max-width: 600px) {
+#touch-controls {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#touch-look-zone {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  width: 56vw;
+  height: 100%;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+#touch-look-zone span {
+  position: absolute;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: 8.5rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.75rem;
+  color: rgb(255 255 255 / 62%);
+  background: rgb(3 43 75 / 30%);
+  font-size: 0.72rem;
+  transition: opacity 120ms ease;
+}
+
+#touch-look-zone.is-looking span {
+  opacity: 0.2;
+}
+
+.touch-dpad {
+  position: absolute;
+  z-index: 2;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: max(1rem, env(safe-area-inset-left));
+  display: grid;
+  grid-template: repeat(3, 3.8rem) / repeat(3, 3.8rem);
+  pointer-events: none;
+}
+
+.touch-dpad button,
+#touch-action {
+  border: 2px solid rgb(255 255 255 / 62%);
+  color: #fff;
+  background: rgb(3 43 75 / 65%);
+  box-shadow: 0 0.4rem 1rem rgb(0 0 0 / 22%);
+  font: 700 1.35rem/1 system-ui, sans-serif;
+  touch-action: none;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-dpad button {
+  width: 3.45rem;
+  height: 3.45rem;
+  border-radius: 1rem;
+}
+
+.touch-dpad button.is-pressed,
+#touch-action.is-pressed {
+  background: rgb(14 165 233 / 82%);
+  transform: scale(0.94);
+}
+
+.touch-up {
+  grid-area: 1 / 2;
+}
+
+.touch-left {
+  grid-area: 2 / 1;
+}
+
+.touch-right {
+  grid-area: 2 / 3;
+}
+
+.touch-down {
+  grid-area: 3 / 2;
+}
+
+#touch-action {
+  position: absolute;
+  z-index: 3;
+  right: max(1.3rem, env(safe-area-inset-right));
+  bottom: max(1.3rem, env(safe-area-inset-bottom));
+  width: 5.8rem;
+  height: 5.8rem;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+@media (pointer: coarse), (max-width: 600px) {
   #hud {
+    top: max(0.5rem, env(safe-area-inset-top));
+    left: max(0.5rem, env(safe-area-inset-left));
+    width: min(15rem, calc(100vw - 1rem));
     padding: 0.75rem;
+  }
+
+  #hud h1 {
+    margin-bottom: 0.3rem;
+    font-size: 1.15rem;
   }
 
   #hud p {
     display: none;
+  }
+
+  #status {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
   }
 }

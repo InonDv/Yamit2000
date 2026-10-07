@@ -3,6 +3,7 @@ import './style.css';
 import { ThirdPersonCamera } from './camera/ThirdPersonCamera';
 import { Player } from './entities/Player';
 import { InputController } from './input/InputController';
+import { TouchControls } from './input/TouchControls';
 import { AudioSystem } from './systems/AudioSystem';
 import { ChairSystem } from './systems/ChairSystem';
 import { CollisionSystem } from './systems/CollisionSystem';
@@ -13,7 +14,10 @@ import { COLORS, CONFIG } from './config';
 const app = document.querySelector<HTMLDivElement>('#app');
 const status = document.querySelector<HTMLElement>('#status');
 const crosshair = document.querySelector<HTMLElement>('#crosshair');
-if (!app || !status || !crosshair) throw new Error('Game UI failed to initialize.');
+const touchControlsRoot = document.querySelector<HTMLElement>('#touch-controls');
+if (!app || !status || !crosshair || !touchControlsRoot) {
+  throw new Error('Game UI failed to initialize.');
+}
 const statusElement = status;
 const crosshairElement = crosshair;
 
@@ -32,6 +36,7 @@ app.append(renderer.domElement);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 140);
 const followCamera = new ThirdPersonCamera(camera);
 const input = new InputController(renderer.domElement);
+const touchControls = new TouchControls(touchControlsRoot, input);
 const audio = new AudioSystem();
 const park = new Park();
 const player = new Player();
@@ -139,10 +144,16 @@ function onResize(): void {
 window.addEventListener('resize', onResize);
 window.addEventListener('beforeunload', () => {
   input.dispose();
+  touchControls.dispose();
   audio.dispose();
   renderer.dispose();
 });
 
 followCamera.update(1, player.group.position, input);
-showMessage('Click the park, then use the arrow keys to explore.', 4);
+showMessage(
+  touchControlsRoot.hidden
+    ? 'Click the park, then use the controls to explore.'
+    : 'Use the on-screen controls to explore the park.',
+  4,
+);
 animate();

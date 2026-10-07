@@ -1,5 +1,6 @@
 export class InputController {
   private readonly held = new Set<string>();
+  private readonly virtualHeld = new Set<string>();
   private readonly pressed = new Set<string>();
   private pointerDeltaX = 0;
   private pointerDeltaY = 0;
@@ -13,7 +14,7 @@ export class InputController {
   }
 
   isHeld(code: string): boolean {
-    return this.held.has(code);
+    return this.held.has(code) || this.virtualHeld.has(code);
   }
 
   consumePressed(code: string): boolean {
@@ -32,6 +33,22 @@ export class InputController {
     const delta = this.pointerDeltaY;
     this.pointerDeltaY = 0;
     return delta;
+  }
+
+  setVirtualKey(code: string, isHeld: boolean): void {
+    if (isHeld) {
+      if (!this.virtualHeld.has(code) && !this.held.has(code)) {
+        this.pressed.add(code);
+      }
+      this.virtualHeld.add(code);
+    } else {
+      this.virtualHeld.delete(code);
+    }
+  }
+
+  addLookDelta(x: number, y: number): void {
+    this.pointerDeltaX += x;
+    this.pointerDeltaY += y;
   }
 
   dispose(): void {
@@ -61,6 +78,7 @@ export class InputController {
 
   private readonly onBlur = (): void => {
     this.held.clear();
+    this.virtualHeld.clear();
     this.pressed.clear();
     this.pointerDeltaX = 0;
     this.pointerDeltaY = 0;
