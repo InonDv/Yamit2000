@@ -128,33 +128,40 @@ export class Npc {
   }
 
   private updateKnockdown(delta: number): boolean {
+    const sunbather = this.mode === 'sunbathing';
+    const fallenRotationX = -Math.PI / 2;
+    const fallenRotationZ = sunbather ? -Math.PI / 2 : -0.22;
+    const fallenX = this.fallStartPosition.x + (sunbather ? 1.05 : 0.38);
+    const fallenY = sunbather ? 0.08 : 0.28;
+    const fallenZ = this.fallStartPosition.z + (sunbather ? 0.25 : 0.85);
+
     if (this.reaction === 'falling') {
       this.reactionTimer = Math.max(0, this.reactionTimer - delta);
       const progress = 1 - this.reactionTimer / CONFIG.npc.fallDuration;
       const eased = 1 - (1 - progress) ** 3;
       this.figure.group.rotation.x = THREE.MathUtils.lerp(
         this.fallStartRotationX,
-        -Math.PI / 2,
+        fallenRotationX,
         eased,
       );
       this.figure.group.rotation.z = THREE.MathUtils.lerp(
         this.fallStartRotationZ,
-        -0.22,
+        fallenRotationZ,
         eased,
       );
       this.figure.group.position.x = THREE.MathUtils.lerp(
         this.fallStartPosition.x,
-        this.fallStartPosition.x + 0.38,
+        fallenX,
         eased,
       );
       this.figure.group.position.y = THREE.MathUtils.lerp(
         this.fallStartPosition.y,
-        0.28,
+        fallenY,
         eased,
       );
       this.figure.group.position.z = THREE.MathUtils.lerp(
         this.fallStartPosition.z,
-        0.85,
+        fallenZ,
         eased,
       );
       if (this.reactionTimer <= 0) {
@@ -178,18 +185,35 @@ export class Npc {
       this.reactionTimer = Math.max(0, this.reactionTimer - delta);
       const progress = 1 - this.reactionTimer / CONFIG.npc.getUpDuration;
       const eased = progress * progress * (3 - 2 * progress);
-      this.figure.group.rotation.x = THREE.MathUtils.lerp(-Math.PI / 2, 0, eased);
-      this.figure.group.rotation.z = THREE.MathUtils.lerp(-0.22, 0, eased);
-      this.figure.group.position.x = THREE.MathUtils.lerp(
-        this.fallStartPosition.x + 0.38,
-        0,
+      this.figure.group.rotation.x = THREE.MathUtils.lerp(
+        fallenRotationX,
+        this.fallStartRotationX,
         eased,
       );
-      this.figure.group.position.y = THREE.MathUtils.lerp(0.28, 0, eased);
-      this.figure.group.position.z = THREE.MathUtils.lerp(0.85, 0, eased);
+      this.figure.group.rotation.z = THREE.MathUtils.lerp(
+        fallenRotationZ,
+        this.fallStartRotationZ,
+        eased,
+      );
+      this.figure.group.position.x = THREE.MathUtils.lerp(
+        fallenX,
+        this.fallStartPosition.x,
+        eased,
+      );
+      this.figure.group.position.y = THREE.MathUtils.lerp(
+        fallenY,
+        this.fallStartPosition.y,
+        eased,
+      );
+      this.figure.group.position.z = THREE.MathUtils.lerp(
+        fallenZ,
+        this.fallStartPosition.z,
+        eased,
+      );
       if (this.reactionTimer <= 0) {
-        this.figure.group.position.set(0, 0, 0);
-        this.figure.group.rotation.set(0, 0, 0);
+        this.figure.group.position.copy(this.fallStartPosition);
+        this.figure.group.rotation.x = this.fallStartRotationX;
+        this.figure.group.rotation.z = this.fallStartRotationZ;
         this.reaction = 'finding-chair';
         this.reactionTimer = CONFIG.npc.retaliationDelay;
       }

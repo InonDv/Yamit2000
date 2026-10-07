@@ -32,6 +32,14 @@ export class CollisionSystem {
         let nearestDistanceSquared = Number.POSITIVE_INFINITY;
 
         for (const npc of this.npcs.npcs) {
+          if (
+            npc.hitCooldown > 0 ||
+            npc.reaction === 'falling' ||
+            npc.reaction === 'down' ||
+            npc.reaction === 'getting-up'
+          ) {
+            continue;
+          }
           const reactionDistance =
             CONFIG.chair.collisionRadius +
             CONFIG.npc.chairReactionRadius * npc.characterScale;
