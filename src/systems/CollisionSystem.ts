@@ -61,7 +61,7 @@ export class CollisionSystem {
           if (attack.informerDown) {
             this.onMessage(
               attack.allInformersDown
-                ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+                ? 'ברכות, הורדת את כל המלשינים!'
                 : 'הורדת מלשין! חפש את המלשינים שנשארו.',
             );
           } else if (attack.reacted) {

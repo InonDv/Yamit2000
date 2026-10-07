@@ -140,7 +140,7 @@ function animate(): void {
       if (punch.informerDown) {
         showMessage(
           punch.allInformersDown
-            ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+            ? 'ברכות, הורדת את כל המלשינים!'
             : 'הורדת מלשין באגרוף! חפש את המלשינים שנשארו.',
         );
       } else {
@@ -164,7 +164,7 @@ function animate(): void {
   if (messageTimer <= 0) {
     const nearest = chairSystem.findNearestIdle(player.group.position, CONFIG.chair.pickupRange);
     statusElement.textContent = npcSystem.allInformersDown
-      ? 'ברכות, שלחת את כל המלשינים לקבורה בפרדס'
+      ? 'ברכות, הורדת את כל המלשינים!'
       : chairSystem.playerChair
         ? 'Holding chair — Space to throw'
         : nearest

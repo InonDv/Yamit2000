@@ -195,15 +195,9 @@ canvas {
 }
 
 .victory-card h2 {
-  margin: 0;
+  margin: 0 0 1.6rem;
   color: #fde047;
   font-size: clamp(2.2rem, 8vw, 4rem);
-}
-
-.victory-card p {
-  margin: 1rem 0 1.6rem;
-  font-size: clamp(1.1rem, 4vw, 1.55rem);
-  font-weight: 700;
 }
 
 #restart-game {
