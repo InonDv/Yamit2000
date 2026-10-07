@@ -14,6 +14,7 @@ export class Player {
     baseballCap: true,
     sleeveless: true,
     nikeBranding: true,
+    armaniCap: true,
     backText: 'בחור טוב',
     knife: true,
   });

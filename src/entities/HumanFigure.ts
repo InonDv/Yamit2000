@@ -7,6 +7,7 @@ interface HumanFigureOptions {
   baseballCap?: boolean;
   sleeveless?: boolean;
   nikeBranding?: boolean;
+  armaniCap?: boolean;
   frontText?: string;
   backText?: string;
   knife?: boolean;
@@ -109,7 +110,9 @@ export class HumanFigure {
       this.group.add(backLabel);
     }
 
-    if (options.baseballCap) this.addBaseballCap(options.nikeBranding ?? false);
+    if (options.baseballCap) {
+      this.addBaseballCap(options.nikeBranding ?? false, options.armaniCap ?? false);
+    }
 
     this.group.traverse((object) => {
       if (object instanceof THREE.Mesh) {
@@ -212,7 +215,7 @@ export class HumanFigure {
     this.group.add(limb);
   }
 
-  private addBaseballCap(nikeBranding: boolean): void {
+  private addBaseballCap(nikeBranding: boolean, armaniBranding: boolean): void {
     const capMaterial = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.75 });
     const crown = new THREE.Mesh(
       new THREE.SphereGeometry(0.385, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -223,12 +226,17 @@ export class HumanFigure {
     brim.position.set(0, 2.43, -0.35);
     brim.rotation.x = -0.08;
     this.group.add(crown, brim);
-    if (nikeBranding) {
-      const frontCapLogo = this.createNikeLogo(0.45, 0.18, '#ffffff');
-      frontCapLogo.position.set(0, 2.55, -0.34);
-      const backCapLogo = this.createNikeLogo(0.5, 0.2, '#ffffff');
-      backCapLogo.position.set(0, 2.55, 0.36);
+    if (armaniBranding) {
+      const frontCapLogo = this.createArmaniLogo(0.5, 0.3, '#ffffff');
+      frontCapLogo.position.set(0, 2.55, -0.355);
+      frontCapLogo.rotation.y = Math.PI;
+      const backCapLogo = this.createArmaniLogo(0.55, 0.32, '#ffffff');
+      backCapLogo.position.set(0, 2.55, 0.37);
       this.group.add(frontCapLogo, backCapLogo);
+    } else if (nikeBranding) {
+      const logo = this.createNikeLogo(0.45, 0.18, '#ffffff');
+      logo.position.set(0, 2.55, -0.34);
+      this.group.add(logo);
     }
   }
 
@@ -366,6 +374,34 @@ export class HumanFigure {
       depthWrite: false,
     });
     return new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+  }
+
+  private createArmaniLogo(width: number, height: number, color: string): THREE.Mesh {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.fillStyle = color;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.font = '900 108px Georgia, serif';
+      context.fillText('GA', 256, 82);
+      context.fillRect(104, 137, 304, 12);
+      context.font = '900 58px Arial, sans-serif';
+      context.fillText('ARMANI', 256, 196);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.Mesh(
+      new THREE.PlaneGeometry(width, height),
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      }),
+    );
   }
 
   private createShirtLabel(text: string): THREE.Mesh {
