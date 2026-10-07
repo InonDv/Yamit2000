@@ -307,13 +307,19 @@ export class HumanFigure {
       context.direction = 'rtl';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.font = '900 122px Arial, sans-serif';
       context.fillStyle = '#172554';
       const words = text.trim().split(/\s+/);
       if (words.length === 2) {
+        context.font = '900 122px Arial, sans-serif';
         context.fillText(words[0], canvas.width / 2, 98);
         context.fillText(words[1], canvas.width / 2, 228);
       } else {
+        let fontSize = 190;
+        context.font = `900 ${fontSize}px Arial, sans-serif`;
+        while (context.measureText(text).width > 460 && fontSize > 120) {
+          fontSize -= 4;
+          context.font = `900 ${fontSize}px Arial, sans-serif`;
+        }
         context.fillText(text, canvas.width / 2, canvas.height / 2);
       }
     }
