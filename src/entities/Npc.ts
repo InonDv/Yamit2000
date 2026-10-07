@@ -13,7 +13,9 @@ export type NpcReaction =
   | 'finding-chair'
   | 'aiming'
   | 'chasing-player'
-  | 'injecting';
+  | 'injecting'
+  | 'chasing-stab'
+  | 'stabbing';
 
 export class Npc {
   readonly group = new THREE.Group();
@@ -97,8 +99,8 @@ export class Npc {
     direction.normalize();
     this.group.position.addScaledVector(direction, CONFIG.npc.walkSpeed * delta);
     this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
-    this.walkPhase += delta * 7;
-    this.figure.setWalkCycle(this.walkPhase, 0.5);
+    this.walkPhase += delta * 9;
+    this.figure.setWalkCycle(this.walkPhase, 0.6);
   }
 
   registerHit(permanentKnockdown = false): boolean {
@@ -130,15 +132,15 @@ export class Npc {
     return true;
   }
 
-  chase(target: THREE.Vector3, delta: number): void {
+  chase(target: THREE.Vector3, delta: number, speed: number = CONFIG.npc.chaseSpeed): void {
     const direction = target.clone().sub(this.group.position);
     direction.y = 0;
     if (direction.lengthSq() === 0) return;
     direction.normalize();
     this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
-    this.group.position.addScaledVector(direction, CONFIG.npc.giantRunSpeed * delta);
-    this.walkPhase += delta * 14;
-    this.figure.setWalkCycle(this.walkPhase, 0.9);
+    this.group.position.addScaledVector(direction, speed * delta);
+    this.walkPhase += delta * 12;
+    this.figure.setWalkCycle(this.walkPhase, 0.85);
   }
 
   face(target: THREE.Vector3): void {
@@ -150,6 +152,14 @@ export class Npc {
 
   setInjectionPose(amount: number): void {
     this.figure.setInjectionPose(amount);
+  }
+
+  setStabPose(amount: number): void {
+    this.figure.setPunchPose(amount);
+  }
+
+  armForStab(): void {
+    this.figure.giveKnife();
   }
 
   private updateKnockdown(delta: number): boolean {
