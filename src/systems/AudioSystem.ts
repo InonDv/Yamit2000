@@ -1,5 +1,6 @@
 export class AudioSystem {
   private context: AudioContext | null = null;
+  private mediaPrimed = false;
   private readonly notenClip = this.createClip('./audio/noten.mp3');
   private readonly ayaClip = this.createClip('./audio/aya.mp3');
   private readonly shemoClip = this.createClip('./audio/shemo.mp3');
@@ -106,6 +107,7 @@ export class AudioSystem {
   private readonly unlock = (): void => {
     const context = this.getContext();
     if (context?.state === 'suspended') void context.resume();
+    this.primeMediaClips();
   };
 
   private getContext(): AudioContext | null {
@@ -129,5 +131,26 @@ export class AudioSystem {
     void clip.play().catch(() => {
       // Browsers may block sound until the first touch, click, or key press.
     });
+  }
+
+  private primeMediaClips(): void {
+    if (this.mediaPrimed) return;
+    this.mediaPrimed = true;
+    for (const clip of [
+      this.notenClip,
+      this.ayaClip,
+      this.shemoClip,
+      this.yerushalaimClip,
+    ]) {
+      const wasMuted = clip.muted;
+      clip.muted = true;
+      const playback = clip.play();
+      clip.pause();
+      clip.currentTime = 0;
+      clip.muted = wasMuted;
+      void playback.catch(() => {
+        // A later interaction can still start the clip normally.
+      });
+    }
   }
 }

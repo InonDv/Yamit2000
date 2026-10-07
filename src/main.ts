@@ -134,9 +134,12 @@ function animate(): void {
   if (input.consumePressed('Space')) {
     const punch = !chairSystem.playerChair ? npcSystem.punchNearest(player) : null;
     if (punch?.reacted) {
-      audio.playPunch();
-      if (punch.informerDown) audio.playShemo();
-      else audio.playNoten();
+      if (punch.informerDown) {
+        audio.playShemo();
+      } else {
+        audio.playPunch();
+        audio.playNoten();
+      }
       if (punch.informerDown) {
         showMessage(
           punch.allInformersDown

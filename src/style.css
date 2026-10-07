@@ -17,6 +17,9 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 canvas {
@@ -76,6 +79,7 @@ canvas {
   z-index: 20;
   inset: 0;
   pointer-events: none;
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }

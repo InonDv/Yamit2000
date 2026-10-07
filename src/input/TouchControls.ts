@@ -63,14 +63,21 @@ export class TouchControls {
       if (document.hidden) reset();
     };
     const preventContextMenu = (event: Event): void => event.preventDefault();
+    const preventBrowserGesture = (event: Event): void => event.preventDefault();
     window.addEventListener('blur', reset);
     window.addEventListener('pagehide', reset);
     document.addEventListener('visibilitychange', resetWhenHidden);
+    document.addEventListener('touchmove', preventBrowserGesture, { passive: false });
+    document.addEventListener('gesturestart', preventBrowserGesture, { passive: false });
+    document.addEventListener('dblclick', preventBrowserGesture, { passive: false });
     root.addEventListener('contextmenu', preventContextMenu);
     this.cleanups.push(() => {
       window.removeEventListener('blur', reset);
       window.removeEventListener('pagehide', reset);
       document.removeEventListener('visibilitychange', resetWhenHidden);
+      document.removeEventListener('touchmove', preventBrowserGesture);
+      document.removeEventListener('gesturestart', preventBrowserGesture);
+      document.removeEventListener('dblclick', preventBrowserGesture);
       root.removeEventListener('contextmenu', preventContextMenu);
       reset();
     });
