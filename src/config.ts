@@ -8,6 +8,7 @@ export const CONFIG = {
     punchRange: 2.15,
     punchDuration: 0.32,
     injectionKnockdownDuration: 5,
+    injectionRollCount: 4,
     radius: 0.7,
     height: 2.4,
     start: { x: 0, z: 20 },

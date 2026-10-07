@@ -167,6 +167,11 @@ function animate(): void {
   if (npcSystem.consumeGiantInjection()) {
     audio.playMorgen();
     showMessage("הערבי הצ'צ'ני הזריק לך חיסון!");
+    if (chairSystem.playerChair) {
+      chairSystem.playerChair.group.position.copy(player.group.position);
+      chairSystem.playerChair.land();
+      chairSystem.playerChair = null;
+    }
   }
   chairSystem.update(delta);
   collisions.update();

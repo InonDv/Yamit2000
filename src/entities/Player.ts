@@ -99,20 +99,33 @@ export class Player {
 
   private updateInjectionKnockdown(delta: number): void {
     const duration = CONFIG.player.injectionKnockdownDuration;
+    const fallTime = 0.4;
+    const getUpTime = 0.55;
+    const rolls = CONFIG.player.injectionRollCount;
     this.injectionKnockdownTimer = Math.max(0, this.injectionKnockdownTimer - delta);
     const elapsed = duration - this.injectionKnockdownTimer;
-    const fallProgress = THREE.MathUtils.clamp(elapsed / 0.35, 0, 1);
-    const riseProgress = THREE.MathUtils.clamp(this.injectionKnockdownTimer / 0.45, 0, 1);
-    const downAmount = Math.min(fallProgress, riseProgress);
-    const rollProgress = THREE.MathUtils.clamp(
-      (elapsed - 0.35) / (duration - 0.8),
-      0,
-      1,
-    );
+    const remaining = this.injectionKnockdownTimer;
+    const fallenX = -Math.PI / 2;
+    const fallenY = 0.32;
+    const fallenZ = 0.9;
 
-    this.figure.group.rotation.x = -Math.PI * 0.5 * downAmount;
-    this.figure.group.rotation.y = Math.PI * 6 * rollProgress * downAmount;
-    this.figure.group.position.set(0, 0.28 * downAmount, 0.85 * downAmount);
+    let downAmount = 1;
+    let roll = 0;
+    if (elapsed < fallTime) {
+      const progress = elapsed / fallTime;
+      downAmount = 1 - (1 - progress) ** 3;
+    } else if (remaining < getUpTime) {
+      const progress = 1 - remaining / getUpTime;
+      downAmount = 1 - progress * progress * (3 - 2 * progress);
+    } else {
+      const rollWindow = Math.max(0.01, duration - fallTime - getUpTime);
+      roll = ((elapsed - fallTime) / rollWindow) * rolls * Math.PI * 2;
+    }
+
+    this.figure.group.rotation.x = fallenX * downAmount;
+    this.figure.group.rotation.y = 0;
+    this.figure.group.rotation.z = roll;
+    this.figure.group.position.set(0, fallenY * downAmount, fallenZ * downAmount);
 
     if (this.injectionKnockdownTimer <= 0) {
       this.figure.group.position.set(0, 0, 0);
