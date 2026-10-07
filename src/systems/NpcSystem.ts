@@ -68,6 +68,7 @@ export class NpcSystem {
       new THREE.Vector3(8, 0, -10),
       "ערבי צ'צ'ני",
       2.7,
+      0xffffff,
     );
     this.npcs.push(giant);
     this.scene.add(giant.group);
