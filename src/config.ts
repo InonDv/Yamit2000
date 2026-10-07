@@ -31,6 +31,7 @@ export const CONFIG = {
   },
   npc: {
     walkSpeed: 2,
+    giantRunSpeed: 7.2,
     radius: 0.75,
     chairReactionRadius: 2.35,
     fallDuration: 0.38,

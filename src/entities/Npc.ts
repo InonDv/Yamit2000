@@ -136,9 +136,9 @@ export class Npc {
     if (direction.lengthSq() === 0) return;
     direction.normalize();
     this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
-    this.group.position.addScaledVector(direction, CONFIG.npc.walkSpeed * 1.35 * delta);
-    this.walkPhase += delta * 8;
-    this.figure.setWalkCycle(this.walkPhase, 0.55);
+    this.group.position.addScaledVector(direction, CONFIG.npc.giantRunSpeed * delta);
+    this.walkPhase += delta * 14;
+    this.figure.setWalkCycle(this.walkPhase, 0.9);
   }
 
   face(target: THREE.Vector3): void {
