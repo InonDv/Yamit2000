@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#7dd3fc" />
     <title>Yamit 2000</title>
-    <script type="module" crossorigin src="./assets/index-CBdH_sa-.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-7J6x5yP8.css">
+    <script type="module" crossorigin src="./assets/index-BJETI4P-.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-De_--2dz.css">
   </head>
   <body>
     <div id="app"></div>
@@ -17,6 +17,18 @@
       <p>Space: punch / pick up / throw</p>
       <strong id="status">Find a white chair!</strong>
     </aside>
-    <div id="crosshair" aria-hidden="true">+</div>
+    <div id="crosshair" aria-hidden="true">+</div>
+    <div id="touch-controls" hidden>
+      <div id="touch-look-zone" role="region" aria-label="Drag to rotate camera">
+        <span>גרור למצלמה</span>
+      </div>
+      <div class="touch-dpad" aria-label="Movement controls">
+        <button class="touch-up" data-touch-key="KeyW" aria-label="Move forward">▲</button>
+        <button class="touch-left" data-touch-key="KeyA" aria-label="Aim left">◀</button>
+        <button class="touch-right" data-touch-key="KeyD" aria-label="Aim right">▶</button>
+        <button class="touch-down" data-touch-key="KeyS" aria-label="Move backward">▼</button>
+      </div>
+      <button id="touch-action" data-touch-key="Space" aria-label="Action">פעולה</button>
+    </div>
   </body>
 </html>
