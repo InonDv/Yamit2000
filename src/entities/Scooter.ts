@@ -11,7 +11,7 @@ export class Scooter {
       roughness: 0.4,
     });
     const accent = new THREE.MeshStandardMaterial({
-      color: 0x84cc16,
+      color: 0x2563eb,
       roughness: 0.45,
     });
     const deck = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.07, 1.05), accent);
