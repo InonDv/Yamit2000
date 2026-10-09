@@ -51,6 +51,9 @@ export class Npc {
   private walkPhase = Math.random() * Math.PI * 2;
   private readonly singing: boolean;
   private readonly partyHabit: 'drink' | 'smoke' | null;
+  private readonly avoidPoint = new THREE.Vector3();
+  private avoidRadius = 0;
+  private hasAvoid = false;
 
   constructor(
     id: number,
@@ -221,6 +224,16 @@ export class Npc {
   seek(position: THREE.Vector3): void {
     this.target.copy(position);
     this.target.y = 0;
+  }
+
+  setAvoid(point: THREE.Vector3, radius: number): void {
+    this.avoidPoint.copy(point);
+    this.avoidPoint.y = 0;
+    this.avoidRadius = radius;
+    this.hasAvoid = true;
+    if (this.target.distanceToSquared(this.avoidPoint) < radius * radius) {
+      this.chooseTarget();
+    }
   }
 
   hasArrived(): boolean {
@@ -566,10 +579,24 @@ export class Npc {
 
   private chooseTarget(): void {
     const limit = CONFIG.world.halfSize - 5;
-    this.target.set(
-      THREE.MathUtils.randFloat(-limit, limit),
-      0,
-      THREE.MathUtils.randFloat(-limit, limit),
-    );
+    const minDistanceSq = this.avoidRadius * this.avoidRadius;
+    for (let attempt = 0; attempt < 16; attempt += 1) {
+      this.target.set(
+        THREE.MathUtils.randFloat(-limit, limit),
+        0,
+        THREE.MathUtils.randFloat(-limit, limit),
+      );
+      if (!this.hasAvoid || this.target.distanceToSquared(this.avoidPoint) >= minDistanceSq) {
+        return;
+      }
+    }
+    if (!this.hasAvoid) return;
+    const away = this.group.position.clone().sub(this.avoidPoint);
+    away.y = 0;
+    if (away.lengthSq() < 0.01) away.set(1, 0, 0);
+    away.normalize();
+    this.target.copy(this.group.position).addScaledVector(away, this.avoidRadius);
+    this.target.x = THREE.MathUtils.clamp(this.target.x, -limit, limit);
+    this.target.z = THREE.MathUtils.clamp(this.target.z, -limit, limit);
   }
 }

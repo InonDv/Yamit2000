@@ -116,7 +116,7 @@ export class NpcSystem {
     const portraitNpc = new Npc(
       regularCount + 1,
       'walking',
-      new THREE.Vector3(-10, 0, 12),
+      new THREE.Vector3(-18, 0, 6),
       'מים ב5',
       1,
       0xffffff,
@@ -196,6 +196,7 @@ export class NpcSystem {
         if (npc.reactionTimer <= 0) this.throwAtTarget(npc, targetPosition);
       }
     }
+    this.keepWaterAndDekelApart(delta);
   }
 
   registerPlayerAttack(npc: Npc): PlayerAttackResult {
@@ -254,6 +255,9 @@ export class NpcSystem {
   }
 
   private updateVendors(delta: number): void {
+    const dekel = this.npcs.find((npc) => npc.proximityCue === 'dekel');
+    const minDistSq =
+      CONFIG.npc.specialNpcSeparation * CONFIG.npc.specialNpcSeparation;
     for (const seller of this.npcs) {
       if (!seller.isVendor || seller.reaction !== 'calm') continue;
       let state = this.vendorSales.get(seller.id);
@@ -261,9 +265,25 @@ export class NpcSystem {
         state = { customerId: null, saleTimer: 0, approaching: false };
         this.vendorSales.set(seller.id, state);
       }
+      if (
+        seller.proximityCue === 'water' &&
+        dekel &&
+        seller.group.position.distanceToSquared(dekel.group.position) < minDistSq
+      ) {
+        continue;
+      }
       state.saleTimer = Math.max(0, state.saleTimer - delta);
       const customer = this.npcs.find((npc) => npc.id === state.customerId);
-      if (customer && !seller.hasArrived()) {
+      const customerTooCloseToDekel =
+        seller.proximityCue === 'water' &&
+        dekel &&
+        customer &&
+        (customer.proximityCue === 'dekel' ||
+          customer.group.position.distanceToSquared(dekel.group.position) < minDistSq);
+      if (customerTooCloseToDekel) {
+        state.customerId = null;
+        state.approaching = false;
+      } else if (customer && !seller.hasArrived()) {
         state.approaching = true;
         seller.seek(customer.group.position);
         continue;
@@ -277,15 +297,66 @@ export class NpcSystem {
         (npc) =>
           npc.id !== seller.id &&
           !npc.isVendor &&
+          !npc.proximityCue &&
           npc.characterScale <= 1 &&
           npc.reaction !== 'falling' &&
-          npc.reaction !== 'down',
+          npc.reaction !== 'down' &&
+          !(
+            seller.proximityCue === 'water' &&
+            dekel &&
+            npc.group.position.distanceToSquared(dekel.group.position) < minDistSq
+          ),
       );
       if (candidates.length === 0) continue;
       const next = candidates[THREE.MathUtils.randInt(0, candidates.length - 1)];
       state.customerId = next.id;
       state.approaching = true;
       seller.seek(next.group.position);
+    }
+  }
+
+  private keepWaterAndDekelApart(delta: number): void {
+    const water = this.npcs.find((npc) => npc.proximityCue === 'water');
+    const dekel = this.npcs.find((npc) => npc.proximityCue === 'dekel');
+    if (!water || !dekel) return;
+    const minDist = CONFIG.npc.specialNpcSeparation;
+    dekel.setAvoid(water.group.position, minDist);
+
+    const offset = water.group.position.clone().sub(dekel.group.position);
+    offset.y = 0;
+    let distance = offset.length();
+    if (distance < 0.001) {
+      offset.set(1, 0, 0);
+      distance = 0.001;
+    }
+    if (distance >= minDist) return;
+    offset.multiplyScalar(1 / distance);
+
+    const limit = CONFIG.world.halfSize - 2;
+    const clampPosition = (position: THREE.Vector3): void => {
+      position.x = THREE.MathUtils.clamp(position.x, -limit, limit);
+      position.z = THREE.MathUtils.clamp(position.z, -limit, limit);
+    };
+
+    if (water.reaction === 'calm') {
+      water.group.position.addScaledVector(offset, CONFIG.npc.walkSpeed * 1.35 * delta);
+      clampPosition(water.group.position);
+      const away = water.group.position.clone().addScaledVector(offset, minDist);
+      clampPosition(away);
+      water.seek(away);
+      const sale = this.vendorSales.get(water.id);
+      if (sale) {
+        sale.customerId = null;
+        sale.approaching = false;
+        sale.saleTimer = 0.5;
+      }
+    }
+    if (dekel.reaction === 'calm') {
+      dekel.group.position.addScaledVector(offset, -CONFIG.npc.walkSpeed * delta);
+      clampPosition(dekel.group.position);
+      const away = dekel.group.position.clone().addScaledVector(offset, -minDist);
+      clampPosition(away);
+      dekel.seek(away);
     }
   }
 
