@@ -147,6 +147,26 @@ export class HumanFigure {
     this.rightArm.rotation.z = 0;
   }
 
+  setSitPose(): void {
+    this.leftArm.rotation.set(-0.25, 0, 0.12);
+    this.rightArm.rotation.set(-0.35, 0, -0.12);
+    this.leftLeg.rotation.set(-1.2, 0, 0.08);
+    this.rightLeg.rotation.set(-1.2, 0, -0.08);
+  }
+
+  setPartyPose(phase: number, habit: 'drink' | 'smoke'): void {
+    this.setSitPose();
+    const lift = (Math.sin(phase) + 1) * 0.5;
+    if (habit === 'drink') {
+      this.rightArm.rotation.x = -0.35 - lift * 1.05;
+      this.rightArm.rotation.z = -0.05;
+    } else {
+      this.rightArm.rotation.x = -0.55 - lift * 0.55;
+      this.rightArm.rotation.z = 0.2;
+      this.leftArm.rotation.x = -0.35;
+    }
+  }
+
   setRidePose(): void {
     this.leftArm.rotation.x = -0.85;
     this.rightArm.rotation.x = -0.85;

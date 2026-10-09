@@ -4,13 +4,15 @@ import { HumanFigure } from './HumanFigure';
 
 const NPC_NAMES = ['נהוראי', 'אלירן', 'אבי', 'יוסי', 'נתי'] as const;
 
-export type NpcMode = 'walking' | 'sunbathing';
+export type NpcMode = 'walking' | 'sunbathing' | 'partying';
 export type NpcExtras = {
   faceTexture?: string;
   baseballCap?: boolean;
   capColor?: number;
   proximityCue?: boolean;
   shoppingCart?: boolean;
+  partyHabit?: 'drink' | 'smoke';
+  facingYaw?: number;
 };
 export type NpcReaction =
   | 'calm'
@@ -40,6 +42,7 @@ export class Npc {
   private permanentKnockdown = false;
   private walkPhase = Math.random() * Math.PI * 2;
   private readonly sellsWater: boolean;
+  private readonly partyHabit: 'drink' | 'smoke' | null;
 
   constructor(
     id: number,
@@ -53,6 +56,7 @@ export class Npc {
     this.id = `npc-${id}`;
     this.proximityCue = extras.proximityCue ?? false;
     this.sellsWater = extras.shoppingCart ?? extras.proximityCue ?? false;
+    this.partyHabit = extras.partyHabit ?? null;
     this.displayName =
       assignedName ??
       (extras.faceTexture
@@ -61,7 +65,12 @@ export class Npc {
     this.isInformer = this.displayName === 'מלשין';
     this.figure = new HumanFigure({
       shirtColor:
-        clothingColor ?? (mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather),
+        clothingColor ??
+        (mode === 'walking'
+          ? COLORS.npcWalker
+          : mode === 'partying'
+            ? 0xdb2777
+            : COLORS.npcSunbather),
       pantsColor: clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
       skinColor: extras.faceTexture
         ? 0xe0b089
@@ -91,6 +100,12 @@ export class Npc {
       this.group.add(lounger);
     }
 
+    if (mode === 'partying') {
+      this.figure.group.position.set(0, 0.5, 0.05);
+      this.figure.setSitPose();
+      if (extras.facingYaw !== undefined) this.group.rotation.y = extras.facingYaw;
+    }
+
     this.group.position.copy(position);
     this.chooseTarget();
   }
@@ -105,6 +120,12 @@ export class Npc {
     }
 
     if (this.updateKnockdown(delta)) return;
+
+    if (this.mode === 'partying' && this.reaction === 'calm' && this.partyHabit) {
+      this.walkPhase += delta * 2.4;
+      this.figure.setPartyPose(this.walkPhase, this.partyHabit);
+      return;
+    }
 
     if (this.mode !== 'walking' || this.reaction !== 'calm') {
       if (this.mode === 'walking') this.figure.resetPose();

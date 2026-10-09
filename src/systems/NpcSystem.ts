@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../config';
 import type { Chair } from '../entities/Chair';
 import { Npc, type NpcMode } from '../entities/Npc';
+import { PARTY_TABLES, PartyTable } from '../entities/PartyTable';
 import type { Player } from '../entities/Player';
 import type { ChairSystem } from './ChairSystem';
 
@@ -27,6 +28,7 @@ export class NpcSystem {
   private waterCustomerId: string | null = null;
   private waterSaleTimer = 0;
   private waterApproaching = false;
+  private readonly partyTables: PartyTable[] = [];
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -34,31 +36,43 @@ export class NpcSystem {
   ) {}
 
   seed(): void {
-    const placements: Array<[NpcMode, number, number]> = [
+    for (const table of PARTY_TABLES) {
+      const partyTable = new PartyTable(table.x, table.z);
+      this.partyTables.push(partyTable);
+      this.scene.add(partyTable.group);
+    }
+    const seats = PartyTable.seats();
+    const roaming: Array<[NpcMode, number, number]> = [
       ['sunbathing', -25, 13],
       ['sunbathing', 24, 3],
-      ['sunbathing', 13, 27],
-      ['sunbathing', -8, -24],
-      ['walking', -2, 9],
       ['walking', 18, 3],
       ['walking', 7, -18],
-      ['walking', -23, -8],
-      ['walking', 28, 28],
       ['sunbathing', -32, 20],
-      ['sunbathing', 32, 20],
-      ['sunbathing', -15, 33],
-      ['sunbathing', 30, -8],
       ['walking', -15, 18],
       ['walking', 8, 22],
-      ['walking', -32, 0],
       ['walking', 30, -28],
-      ['walking', 2, -30],
+      ['sunbathing', 30, -8],
     ];
+    const regularCount = seats.length + roaming.length;
     const informerIndexes = new Set<number>();
     while (informerIndexes.size < this.totalInformers) {
-      informerIndexes.add(THREE.MathUtils.randInt(0, placements.length - 1));
+      informerIndexes.add(THREE.MathUtils.randInt(0, regularCount - 1));
     }
-    placements.forEach(([mode, x, z], index) => {
+    seats.forEach((seat, index) => {
+      const npc = new Npc(
+        index,
+        'partying',
+        seat.position,
+        informerIndexes.has(index) ? 'מלשין' : undefined,
+        1,
+        undefined,
+        { partyHabit: seat.habit, facingYaw: seat.yaw },
+      );
+      this.npcs.push(npc);
+      this.scene.add(npc.group);
+    });
+    roaming.forEach(([mode, x, z], roamingIndex) => {
+      const index = seats.length + roamingIndex;
       const npc = new Npc(
         index,
         mode,
@@ -68,11 +82,11 @@ export class NpcSystem {
       this.npcs.push(npc);
       this.scene.add(npc.group);
       if (mode === 'walking') {
-        this.ambientTimers.set(npc.id, 2 + (index % 5) * 0.7);
+        this.ambientTimers.set(npc.id, 2 + (roamingIndex % 5) * 0.7);
       }
     });
     const giant = new Npc(
-      placements.length,
+      regularCount,
       'walking',
       new THREE.Vector3(8, 0, -10),
       "ערבי צ'צ'ני",
@@ -82,7 +96,7 @@ export class NpcSystem {
     this.npcs.push(giant);
     this.scene.add(giant.group);
     const portraitNpc = new Npc(
-      placements.length + 1,
+      regularCount + 1,
       'walking',
       new THREE.Vector3(-10, 0, 12),
       'מים ב5',
@@ -101,6 +115,7 @@ export class NpcSystem {
   update(delta: number, player: Player): void {
     this.updateProximityCue(player);
     this.updateWaterSeller(delta);
+    for (const table of this.partyTables) table.update(delta);
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
