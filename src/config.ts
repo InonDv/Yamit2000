@@ -43,6 +43,8 @@ export const CONFIG = {
     chairSearchRange: 12,
     ambientThrowMinDelay: 3.5,
     ambientThrowMaxDelay: 7,
+    proximityCueRange: 7,
+    proximityCueCooldown: 60,
   },
 } as const;
 

@@ -12,6 +12,8 @@ interface HumanFigureOptions {
   backText?: string;
   knife?: boolean;
   syringe?: boolean;
+  faceTexture?: string;
+  capColor?: number;
 }
 
 export class HumanFigure {
@@ -79,17 +81,21 @@ export class HumanFigure {
     head.scale.set(0.92, 1.08, 0.95);
     head.position.y = 2.23;
 
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x172554 });
-    for (const x of [-0.13, 0.13]) {
-      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), eyeMaterial);
-      eye.position.set(x, 2.29, -0.335);
-      this.group.add(eye);
+    this.group.add(neck, head);
+    if (options.faceTexture) {
+      this.addFacePhoto(options.faceTexture);
+    } else {
+      const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x172554 });
+      for (const x of [-0.13, 0.13]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 5), eyeMaterial);
+        eye.position.set(x, 2.29, -0.335);
+        this.group.add(eye);
+      }
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 6), skinMaterial);
+      nose.position.set(0, 2.18, -0.38);
+      nose.rotation.x = -Math.PI / 2;
+      this.group.add(nose);
     }
-
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 6), skinMaterial);
-    nose.position.set(0, 2.18, -0.38);
-    nose.rotation.x = -Math.PI / 2;
-    this.group.add(neck, head, nose);
 
     if (options.nikeBranding) {
       const chestLogo = this.createNikeLogo(0.3, 0.12, '#111827');
@@ -111,7 +117,11 @@ export class HumanFigure {
     }
 
     if (options.baseballCap) {
-      this.addBaseballCap(options.nikeBranding ?? false, options.armaniCap ?? false);
+      this.addBaseballCap(
+        options.nikeBranding ?? false,
+        options.armaniCap ?? false,
+        options.capColor,
+      );
     }
 
     this.group.traverse((object) => {
@@ -215,8 +225,43 @@ export class HumanFigure {
     this.group.add(limb);
   }
 
-  private addBaseballCap(nikeBranding: boolean, armaniBranding: boolean): void {
-    const capMaterial = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.75 });
+  private addFacePhoto(url: string): void {
+    const loader = new THREE.TextureLoader();
+    loader.load(url, (source) => {
+      const image = source.image as HTMLImageElement;
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 640;
+      const context = canvas.getContext('2d');
+      if (context && image) {
+        context.beginPath();
+        context.ellipse(256, 320, 248, 312, 0, 0, Math.PI * 2);
+        context.closePath();
+        context.clip();
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const face = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.78, 0.98),
+        new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: false,
+        }),
+      );
+      face.position.set(0, 2.28, -0.38);
+      face.rotation.y = Math.PI;
+      this.group.add(face);
+    });
+  }
+
+  private addBaseballCap(
+    nikeBranding: boolean,
+    armaniBranding: boolean,
+    capColor = 0x1d4ed8,
+  ): void {
+    const capMaterial = new THREE.MeshStandardMaterial({ color: capColor, roughness: 0.75 });
     const crown = new THREE.Mesh(
       new THREE.SphereGeometry(0.385, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2),
       capMaterial,

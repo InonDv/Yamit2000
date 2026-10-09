@@ -163,6 +163,9 @@ function animate(): void {
   }
 
   npcSystem.update(delta, player);
+  if (npcSystem.consumeProximityCue()) {
+    audio.playWater();
+  }
   if (npcSystem.consumeGiantInjection()) {
     audio.playMorgen();
     showMessage("הערבי הצ'צ'ני הזריק לך חיסון!");

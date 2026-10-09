@@ -5,6 +5,12 @@ import { HumanFigure } from './HumanFigure';
 const NPC_NAMES = ['נהוראי', 'אלירן', 'אבי', 'יוסי', 'נתי'] as const;
 
 export type NpcMode = 'walking' | 'sunbathing';
+export type NpcExtras = {
+  faceTexture?: string;
+  baseballCap?: boolean;
+  capColor?: number;
+  proximityCue?: boolean;
+};
 export type NpcReaction =
   | 'calm'
   | 'falling'
@@ -20,6 +26,7 @@ export class Npc {
   readonly id: string;
   readonly displayName: string;
   readonly isInformer: boolean;
+  readonly proximityCue: boolean;
   reaction: NpcReaction = 'calm';
   reactionTimer = 0;
   hitCooldown = 0;
@@ -39,19 +46,29 @@ export class Npc {
     assignedName?: string,
     readonly characterScale = 1,
     clothingColor?: number,
+    extras: NpcExtras = {},
   ) {
     this.id = `npc-${id}`;
+    this.proximityCue = extras.proximityCue ?? false;
     this.displayName =
-      assignedName ?? NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)];
+      assignedName ??
+      (extras.faceTexture
+        ? ''
+        : NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)]);
     this.isInformer = this.displayName === 'מלשין';
     this.figure = new HumanFigure({
       shirtColor:
         clothingColor ?? (mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather),
       pantsColor: clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
-      skinColor: [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
-      frontText: this.displayName,
-      backText: this.displayName,
+      skinColor: extras.faceTexture
+        ? 0xc68642
+        : [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
+      frontText: this.displayName || undefined,
+      backText: this.displayName || undefined,
       syringe: this.displayName === "ערבי צ'צ'ני",
+      baseballCap: extras.baseballCap,
+      capColor: extras.capColor,
+      faceTexture: extras.faceTexture,
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);

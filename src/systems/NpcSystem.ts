@@ -21,6 +21,9 @@ export class NpcSystem {
   private readonly ambientTimers = new Map<string, number>();
   private readonly deliveredInjections = new Set<string>();
   private giantInjectionEvent = false;
+  private proximityCueReady = false;
+  private lastProximityCueAt = 0;
+  private wasNearProximityNpc = false;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -75,9 +78,26 @@ export class NpcSystem {
     );
     this.npcs.push(giant);
     this.scene.add(giant.group);
+    const portraitNpc = new Npc(
+      placements.length + 1,
+      'walking',
+      new THREE.Vector3(-10, 0, 12),
+      undefined,
+      1,
+      0x147a5a,
+      {
+        faceTexture: './textures/water-face.png',
+        baseballCap: true,
+        capColor: 0x1f2937,
+        proximityCue: true,
+      },
+    );
+    this.npcs.push(portraitNpc);
+    this.scene.add(portraitNpc.group);
   }
 
   update(delta: number, player: Player): void {
+    this.updateProximityCue(player);
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
@@ -150,6 +170,28 @@ export class NpcSystem {
     return true;
   }
 
+  consumeProximityCue(): boolean {
+    if (!this.proximityCueReady) return false;
+    this.proximityCueReady = false;
+    return true;
+  }
+
+  private updateProximityCue(player: Player): void {
+    const portraitNpc = this.npcs.find((npc) => npc.proximityCue);
+    if (!portraitNpc) return;
+    const inRange =
+      portraitNpc.group.position.distanceTo(player.group.position) <=
+      CONFIG.npc.proximityCueRange;
+    if (inRange && !this.wasNearProximityNpc) {
+      const elapsed = (performance.now() - this.lastProximityCueAt) / 1000;
+      if (this.lastProximityCueAt === 0 || elapsed >= CONFIG.npc.proximityCueCooldown) {
+        this.lastProximityCueAt = performance.now();
+        this.proximityCueReady = true;
+      }
+    }
+    this.wasNearProximityNpc = inRange;
+  }
+
   punchNearest(player: Player): PlayerAttackResult {
     let nearest: Npc | null = null;
     let nearestDistance: number = CONFIG.player.punchRange;
@@ -199,7 +241,14 @@ export class NpcSystem {
   }
 
   private updateAmbientThrow(npc: Npc, delta: number): void {
-    if (npc.mode !== 'walking' || npc.isInformer || npc.characterScale > 1) return;
+    if (
+      npc.mode !== 'walking' ||
+      npc.isInformer ||
+      npc.characterScale > 1 ||
+      npc.proximityCue
+    ) {
+      return;
+    }
     const timer = (this.ambientTimers.get(npc.id) ?? this.randomAmbientDelay()) - delta;
     if (timer > 0) {
       this.ambientTimers.set(npc.id, timer);
@@ -213,6 +262,7 @@ export class NpcSystem {
         candidate.id === npc.id ||
         candidate.isInformer ||
         candidate.characterScale > 1 ||
+        candidate.proximityCue ||
         candidate.reaction !== 'calm'
       ) {
         continue;
