@@ -14,6 +14,7 @@ interface HumanFigureOptions {
   syringe?: boolean;
   faceTexture?: string;
   capColor?: number;
+  shirtLabelScale?: number;
 }
 
 export class HumanFigure {
@@ -104,14 +105,14 @@ export class HumanFigure {
     }
 
     if (options.frontText) {
-      const frontLabel = this.createShirtLabel(options.frontText);
+      const frontLabel = this.createShirtLabel(options.frontText, options.shirtLabelScale);
       frontLabel.position.set(0, 1.48, -0.28);
       frontLabel.rotation.y = Math.PI;
       this.group.add(frontLabel);
     }
 
     if (options.backText) {
-      const backLabel = this.createShirtLabel(options.backText);
+      const backLabel = this.createShirtLabel(options.backText, options.shirtLabelScale);
       backLabel.position.set(0, 1.48, 0.28);
       this.group.add(backLabel);
     }
@@ -234,25 +235,32 @@ export class HumanFigure {
       canvas.height = 640;
       const context = canvas.getContext('2d');
       if (context && image) {
+        context.filter = 'brightness(1.85) contrast(1.25) saturate(1.15)';
         context.beginPath();
-        context.ellipse(256, 320, 248, 312, 0, 0, Math.PI * 2);
+        context.ellipse(256, 320, 250, 318, 0, 0, Math.PI * 2);
         context.closePath();
         context.clip();
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
       }
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
-      const face = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.78, 0.98),
-        new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          depthWrite: false,
-        }),
-      );
-      face.position.set(0, 2.28, -0.38);
-      face.rotation.y = Math.PI;
-      this.group.add(face);
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        color: 0xffffff,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+      const geometry = new THREE.PlaneGeometry(1.22, 1.52);
+      for (let index = 0; index < 4; index += 1) {
+        const mount = new THREE.Group();
+        const face = new THREE.Mesh(geometry, material);
+        face.position.set(0, 2.34, -0.48);
+        face.rotation.y = Math.PI;
+        mount.add(face);
+        mount.rotation.y = (index * Math.PI) / 2;
+        this.group.add(mount);
+      }
     });
   }
 
@@ -449,7 +457,7 @@ export class HumanFigure {
     );
   }
 
-  private createShirtLabel(text: string): THREE.Mesh {
+  private createShirtLabel(text: string, scale = 1): THREE.Mesh {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 320;
@@ -461,7 +469,7 @@ export class HumanFigure {
       context.fillStyle = '#172554';
       const words = text.trim().split(/\s+/);
       if (words.length === 2) {
-        context.font = '900 122px Arial, sans-serif';
+        context.font = '900 150px Arial, sans-serif';
         context.fillText(words[0], canvas.width / 2, 98);
         context.fillText(words[1], canvas.width / 2, 228);
       } else {
@@ -477,7 +485,7 @@ export class HumanFigure {
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     return new THREE.Mesh(
-      new THREE.PlaneGeometry(0.78, 0.5),
+      new THREE.PlaneGeometry(0.78 * scale, 0.5 * scale),
       new THREE.MeshBasicMaterial({
         map: texture,
         transparent: true,

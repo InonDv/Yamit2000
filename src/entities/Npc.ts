@@ -61,7 +61,7 @@ export class Npc {
         clothingColor ?? (mode === 'walking' ? COLORS.npcWalker : COLORS.npcSunbather),
       pantsColor: clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
       skinColor: extras.faceTexture
-        ? 0xc68642
+        ? 0xe0b089
         : [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
       frontText: this.displayName || undefined,
       backText: this.displayName || undefined,
@@ -69,6 +69,7 @@ export class Npc {
       baseballCap: extras.baseballCap,
       capColor: extras.capColor,
       faceTexture: extras.faceTexture,
+      shirtLabelScale: extras.faceTexture ? 1.55 : 1,
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);

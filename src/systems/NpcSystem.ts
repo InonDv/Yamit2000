@@ -82,7 +82,7 @@ export class NpcSystem {
       placements.length + 1,
       'walking',
       new THREE.Vector3(-10, 0, 12),
-      undefined,
+      'מים ב5',
       1,
       0x147a5a,
       {
