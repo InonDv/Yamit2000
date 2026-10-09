@@ -24,6 +24,9 @@ export class NpcSystem {
   private proximityCueReady = false;
   private lastProximityCueAt = 0;
   private wasNearProximityNpc = false;
+  private waterCustomerId: string | null = null;
+  private waterSaleTimer = 0;
+  private waterApproaching = false;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -90,6 +93,7 @@ export class NpcSystem {
         baseballCap: true,
         capColor: 0x1f2937,
         proximityCue: true,
+        shoppingCart: true,
       },
     );
     this.npcs.push(portraitNpc);
@@ -98,6 +102,7 @@ export class NpcSystem {
 
   update(delta: number, player: Player): void {
     this.updateProximityCue(player);
+    this.updateWaterSeller(delta);
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
@@ -174,6 +179,35 @@ export class NpcSystem {
     if (!this.proximityCueReady) return false;
     this.proximityCueReady = false;
     return true;
+  }
+
+  private updateWaterSeller(delta: number): void {
+    const seller = this.npcs.find((npc) => npc.proximityCue);
+    if (!seller || seller.reaction !== 'calm') return;
+    this.waterSaleTimer = Math.max(0, this.waterSaleTimer - delta);
+    const customer = this.npcs.find((npc) => npc.id === this.waterCustomerId);
+    if (customer && !seller.hasArrived()) {
+      this.waterApproaching = true;
+      seller.seek(customer.group.position);
+      return;
+    }
+    if (this.waterApproaching && customer && seller.hasArrived()) {
+      this.waterApproaching = false;
+      this.waterSaleTimer = 1.8;
+    }
+    if (this.waterSaleTimer > 0) return;
+    const candidates = this.npcs.filter(
+      (npc) =>
+        npc.id !== seller.id &&
+        npc.characterScale <= 1 &&
+        npc.reaction !== 'falling' &&
+        npc.reaction !== 'down',
+    );
+    if (candidates.length === 0) return;
+    const next = candidates[THREE.MathUtils.randInt(0, candidates.length - 1)];
+    this.waterCustomerId = next.id;
+    this.waterApproaching = true;
+    seller.seek(next.group.position);
   }
 
   private updateProximityCue(player: Player): void {
