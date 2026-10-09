@@ -148,23 +148,32 @@ export class HumanFigure {
   }
 
   setSitPose(): void {
-    this.leftArm.rotation.set(-0.25, 0, 0.12);
-    this.rightArm.rotation.set(-0.35, 0, -0.12);
-    this.leftLeg.rotation.set(-1.2, 0, 0.08);
-    this.rightLeg.rotation.set(-1.2, 0, -0.08);
+    this.leftArm.rotation.set(-0.2, 0, 0.1);
+    this.rightArm.rotation.set(-0.25, 0, -0.1);
+    this.leftLeg.rotation.set(1.18, 0, 0.12);
+    this.rightLeg.rotation.set(1.18, 0, -0.12);
   }
 
   setPartyPose(phase: number, habit: 'drink' | 'smoke'): void {
     this.setSitPose();
     const lift = (Math.sin(phase) + 1) * 0.5;
     if (habit === 'drink') {
-      this.rightArm.rotation.x = -0.35 - lift * 1.05;
-      this.rightArm.rotation.z = -0.05;
+      this.rightArm.rotation.x = 1.55 + lift * 0.45;
+      this.rightArm.rotation.z = -0.12;
     } else {
-      this.rightArm.rotation.x = -0.55 - lift * 0.55;
-      this.rightArm.rotation.z = 0.2;
-      this.leftArm.rotation.x = -0.35;
+      this.rightArm.rotation.x = 1.9 + lift * 0.18;
+      this.rightArm.rotation.z = -0.28;
+      this.leftArm.rotation.x = 0.2;
     }
+  }
+
+  attachToRightHand(object: THREE.Object3D): void {
+    object.position.set(0, -1.02, -0.03);
+    this.rightArm.add(object);
+  }
+
+  getRightHandWorldPosition(target = new THREE.Vector3()): THREE.Vector3 {
+    return this.rightArm.localToWorld(target.set(0, -1.02, -0.08));
   }
 
   setRidePose(): void {

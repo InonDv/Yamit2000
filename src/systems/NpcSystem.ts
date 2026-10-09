@@ -29,6 +29,18 @@ export class NpcSystem {
   private waterSaleTimer = 0;
   private waterApproaching = false;
   private readonly partyTables: PartyTable[] = [];
+  private readonly hookahHoses: Array<{
+    npc: Npc;
+    table: PartyTable;
+    mesh: THREE.Mesh;
+  }> = [];
+  private readonly hoseMaterial = new THREE.MeshStandardMaterial({
+    color: 0x111827,
+    roughness: 0.7,
+  });
+  private readonly hoseHand = new THREE.Vector3();
+  private readonly hoseAnchor = new THREE.Vector3();
+  private readonly hoseSag = new THREE.Vector3();
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -36,12 +48,13 @@ export class NpcSystem {
   ) {}
 
   seed(): void {
+    const seats: ReturnType<PartyTable['seats']> = [];
     for (const table of PARTY_TABLES) {
       const partyTable = new PartyTable(table.x, table.z);
       this.partyTables.push(partyTable);
       this.scene.add(partyTable.group);
+      seats.push(...partyTable.seats());
     }
-    const seats = PartyTable.seats();
     const roaming: Array<[NpcMode, number, number]> = [
       ['sunbathing', -25, 13],
       ['sunbathing', 24, 3],
@@ -70,6 +83,11 @@ export class NpcSystem {
       );
       this.npcs.push(npc);
       this.scene.add(npc.group);
+      if (seat.habit === 'smoke') {
+        const mesh = new THREE.Mesh(new THREE.BufferGeometry(), this.hoseMaterial);
+        this.scene.add(mesh);
+        this.hookahHoses.push({ npc, table: seat.table, mesh });
+      }
     });
     roaming.forEach(([mode, x, z], roamingIndex) => {
       const index = seats.length + roamingIndex;
@@ -116,6 +134,7 @@ export class NpcSystem {
     this.updateProximityCue(player);
     this.updateWaterSeller(delta);
     for (const table of this.partyTables) table.update(delta);
+    this.updateHookahHoses();
     for (const npc of this.npcs) {
       npc.update(delta);
       if (npc.characterScale > 1 && this.updateGiantRetaliation(npc, player, delta)) {
@@ -221,6 +240,32 @@ export class NpcSystem {
     this.waterCustomerId = next.id;
     this.waterApproaching = true;
     seller.seek(next.group.position);
+  }
+
+  private updateHookahHoses(): void {
+    for (const hose of this.hookahHoses) {
+      if (hose.npc.reaction !== 'calm') {
+        hose.mesh.visible = false;
+        continue;
+      }
+      hose.mesh.visible = true;
+      hose.table.hoseAnchor(this.hoseAnchor);
+      hose.npc.getRightHandWorldPosition(this.hoseHand);
+      this.hoseSag.lerpVectors(this.hoseAnchor, this.hoseHand, 0.5);
+      this.hoseSag.y = Math.min(this.hoseAnchor.y, this.hoseHand.y) - 0.42;
+      hose.mesh.geometry.dispose();
+      hose.mesh.geometry = new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3([
+          this.hoseAnchor.clone(),
+          this.hoseSag.clone(),
+          this.hoseHand.clone(),
+        ]),
+        14,
+        0.018,
+        6,
+        false,
+      );
+    }
   }
 
   private updateProximityCue(player: Player): void {

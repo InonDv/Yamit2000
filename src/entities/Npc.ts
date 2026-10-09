@@ -101,8 +101,10 @@ export class Npc {
     }
 
     if (mode === 'partying') {
-      this.figure.group.position.set(0, 0.5, 0.05);
+      this.figure.group.position.set(0, -0.36, 0.12);
       this.figure.setSitPose();
+      if (this.partyHabit === 'smoke') this.figure.attachToRightHand(this.createMouthpiece());
+      if (this.partyHabit === 'drink') this.figure.attachToRightHand(this.createHeldGlass());
       if (extras.facingYaw !== undefined) this.group.rotation.y = extras.facingYaw;
     }
 
@@ -206,6 +208,38 @@ export class Npc {
 
   hasArrived(): boolean {
     return this.group.position.distanceToSquared(this.target) < 3.2;
+  }
+
+  getRightHandWorldPosition(target = new THREE.Vector3()): THREE.Vector3 {
+    return this.figure.getRightHandWorldPosition(target);
+  }
+
+  private createMouthpiece(): THREE.Group {
+    const piece = new THREE.Group();
+    const hose = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.65 });
+    const tip = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.016, 0.02, 0.14, 8),
+      new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.6, roughness: 0.3 }),
+    );
+    tip.rotation.x = Math.PI / 2;
+    tip.position.z = -0.08;
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.1, 8), hose);
+    grip.rotation.x = Math.PI / 2;
+    grip.position.z = 0.02;
+    piece.add(tip, grip);
+    return piece;
+  }
+
+  private createHeldGlass(): THREE.Mesh {
+    return new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.035, 0.11, 10),
+      new THREE.MeshStandardMaterial({
+        color: 0xbfdbfe,
+        transparent: true,
+        opacity: 0.45,
+        roughness: 0.1,
+      }),
+    );
   }
 
   private updateKnockdown(delta: number): boolean {

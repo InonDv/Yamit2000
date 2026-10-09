@@ -6,13 +6,14 @@ export const PARTY_TABLES = [
   { x: -22, z: 7 },
 ] as const;
 
-const SEAT_RADIUS = 1.5;
+const SEAT_RADIUS = 1.58;
 const SEATS_PER_TABLE = 3;
 
 export type PartySeat = {
   position: THREE.Vector3;
   yaw: number;
   habit: 'drink' | 'smoke';
+  table: PartyTable;
 };
 
 export class PartyTable {
@@ -59,32 +60,35 @@ export class PartyTable {
     });
   }
 
-  static seats(): PartySeat[] {
+  seats(): PartySeat[] {
     const seats: PartySeat[] = [];
-    PARTY_TABLES.forEach((table, tableIndex) => {
-      for (let index = 0; index < SEATS_PER_TABLE; index += 1) {
-        const angle = (index / SEATS_PER_TABLE) * Math.PI * 2;
-        seats.push({
-          position: new THREE.Vector3(
-            table.x + Math.sin(angle) * SEAT_RADIUS,
-            0,
-            table.z + Math.cos(angle) * SEAT_RADIUS,
-          ),
-          yaw: angle,
-          habit: (tableIndex + index) % 2 === 0 ? 'drink' : 'smoke',
-        });
-      }
-    });
+    for (let index = 0; index < SEATS_PER_TABLE; index += 1) {
+      const angle = (index / SEATS_PER_TABLE) * Math.PI * 2;
+      seats.push({
+        position: new THREE.Vector3(
+          this.group.position.x + Math.sin(angle) * SEAT_RADIUS,
+          0,
+          this.group.position.z + Math.cos(angle) * SEAT_RADIUS,
+        ),
+        yaw: angle,
+        habit: index % 2 === 0 ? 'smoke' : 'drink',
+        table: this,
+      });
+    }
     return seats;
+  }
+
+  hoseAnchor(target = new THREE.Vector3()): THREE.Vector3 {
+    return this.group.localToWorld(target.set(0.07, 1.16, 0.04));
   }
 
   private createChair(): THREE.Group {
     const chair = new THREE.Group();
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.55), material);
-    seat.position.y = 0.48;
-    const back = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.58, 0.08), material);
-    back.position.set(0, 0.8, 0.24);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.08, 0.7), material);
+    seat.position.y = 0.5;
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.62, 0.08), material);
+    back.position.set(0, 0.84, 0.31);
     const legGeometry = new THREE.BoxGeometry(0.07, 0.48, 0.07);
     for (const x of [-0.2, 0.2]) {
       for (const z of [-0.2, 0.2]) {
@@ -206,13 +210,10 @@ export class PartyTable {
       }),
     );
     coal.position.y = 1.63;
-    const hose = new THREE.Mesh(
-      new THREE.TorusGeometry(0.22, 0.018, 6, 16, Math.PI),
-      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.7 }),
-    );
-    hose.rotation.x = Math.PI / 2;
-    hose.position.set(0.18, 1.12, 0.12);
-    hookah.add(vase, stem, bowl, coal, hose);
+    const port = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.08, 8), metal);
+    port.rotation.z = Math.PI / 2;
+    port.position.set(0.07, 1.16, 0.04);
+    hookah.add(vase, stem, bowl, coal, port);
     this.group.add(hookah);
 
     const smokeMaterial = new THREE.MeshStandardMaterial({
