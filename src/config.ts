@@ -51,7 +51,7 @@ export const CONFIG = {
     ambientThrowMinDelay: 3.5,
     ambientThrowMaxDelay: 7,
     proximityCueRange: 7,
-    proximityCueCooldown: 60,
+    proximityCueCooldown: 180,
     giantInjectRange: 3.2,
   },
 } as const;
