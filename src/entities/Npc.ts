@@ -12,8 +12,12 @@ export type NpcExtras = {
   capColor?: number;
   proximityCue?: ProximityCue;
   shoppingCart?: boolean;
+  hotDogStand?: boolean;
   microphone?: boolean;
   pantsColor?: number;
+  skinColor?: number;
+  shirtLabelScale?: number;
+  shirtLabelY?: number;
   partyHabit?: 'drink' | 'smoke';
   facingYaw?: number;
 };
@@ -33,6 +37,7 @@ export class Npc {
   readonly displayName: string;
   readonly isInformer: boolean;
   readonly proximityCue: ProximityCue | null;
+  readonly isVendor: boolean;
   reaction: NpcReaction = 'calm';
   reactionTimer = 0;
   hitCooldown = 0;
@@ -44,7 +49,6 @@ export class Npc {
   private fallStartRotationZ = 0;
   private permanentKnockdown = false;
   private walkPhase = Math.random() * Math.PI * 2;
-  private readonly sellsWater: boolean;
   private readonly singing: boolean;
   private readonly partyHabit: 'drink' | 'smoke' | null;
 
@@ -59,7 +63,7 @@ export class Npc {
   ) {
     this.id = `npc-${id}`;
     this.proximityCue = extras.proximityCue ?? null;
-    this.sellsWater = extras.shoppingCart ?? false;
+    this.isVendor = Boolean(extras.shoppingCart || extras.hotDogStand);
     this.singing = extras.microphone ?? false;
     this.partyHabit = extras.partyHabit ?? null;
     this.displayName =
@@ -79,22 +83,26 @@ export class Npc {
       pantsColor:
         extras.pantsColor ?? clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
       microphone: extras.microphone,
-      skinColor: extras.faceTexture
-        ? 0xe0b089
-        : [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
+      skinColor:
+        extras.skinColor ??
+        (extras.faceTexture
+          ? 0xe0b089
+          : [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4]),
       frontText: this.displayName || undefined,
       backText: this.displayName || undefined,
       syringe: this.displayName === "ערבי צ'צ'ני",
       baseballCap: extras.baseballCap,
       capColor: extras.capColor,
       faceTexture: extras.faceTexture,
-      shirtLabelScale: extras.faceTexture ? 1.55 : 1,
+      shirtLabelScale: extras.shirtLabelScale ?? (extras.faceTexture ? 1.55 : 1),
+      shirtLabelY: extras.shirtLabelY,
     });
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);
     this.group.scale.setScalar(characterScale);
     if (this.singing) this.figure.setSingWalkCycle(this.walkPhase, 0);
-    if (this.sellsWater) this.addShoppingCart();
+    if (extras.shoppingCart) this.addShoppingCart();
+    if (extras.hotDogStand) this.addHotDogStand();
 
     if (mode === 'sunbathing') {
       this.figure.group.position.set(0, 0.68, 1.05);
@@ -143,8 +151,8 @@ export class Npc {
     }
     const direction = this.target.clone().sub(this.group.position);
     direction.y = 0;
-    if (direction.lengthSq() < (this.sellsWater ? 3.2 : 1)) {
-      if (this.sellsWater) {
+    if (direction.lengthSq() < (this.isVendor ? 3.2 : 1)) {
+      if (this.isVendor) {
         this.figure.resetPose();
         return;
       }
@@ -435,9 +443,118 @@ export class Npc {
     }
     cart.add(basket, bottom, back, handleBar);
     cart.position.set(0, 0, 1.28);
+    this.mountAround(cart);
+  }
+
+  private addHotDogStand(): void {
+    const stand = new THREE.Group();
+    const yellow = new THREE.MeshStandardMaterial({ color: 0xf4c430, roughness: 0.52 });
+    const red = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.58 });
+    const chrome = new THREE.MeshStandardMaterial({
+      color: 0xd1d5db,
+      metalness: 0.72,
+      roughness: 0.28,
+    });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.7 });
+    const bun = new THREE.MeshStandardMaterial({ color: 0xe8c089, roughness: 0.78 });
+    const sausage = new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.5 });
+    const ketchup = new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.4 });
+    const mustard = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.4 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.62, 0.8), yellow);
+    body.position.y = 0.56;
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 0.82), red);
+    stripe.position.y = 0.56;
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.05, 0.84), chrome);
+    counter.position.y = 0.88;
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.045, 0.42), dark);
+    grill.position.set(0.08, 0.93, 0);
+    stand.add(body, stripe, counter, grill);
+
+    for (let index = 0; index < 4; index += 1) {
+      const dog = new THREE.Group();
+      const bread = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.34, 10), bun);
+      bread.rotation.z = Math.PI / 2;
+      bread.scale.z = 0.68;
+      const meat = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.38, 10), sausage);
+      meat.rotation.z = Math.PI / 2;
+      dog.add(bread, meat);
+      dog.position.set(-0.2 + index * 0.15, 0.99, 0);
+      dog.rotation.y = 0.12;
+      stand.add(dog);
+    }
+
+    const ketchupBottle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.16, 8), ketchup);
+    ketchupBottle.position.set(-0.46, 1.0, 0.18);
+    const mustardBottle = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.16, 8), mustard);
+    mustardBottle.position.set(-0.46, 1.0, -0.18);
+    stand.add(ketchupBottle, mustardBottle);
+
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.05, 8), chrome);
+    pole.position.set(0, 1.42, 0);
+    const canopy = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.045, 0.95), red);
+    canopy.position.set(0, 1.96, 0);
+    canopy.rotation.x = 0.06;
+    const sign = this.createVendorSign('נקניקיות');
+    sign.position.set(0, 1.72, 0.5);
+    stand.add(pole, canopy, sign);
+
+    const wheelGeometry = new THREE.CylinderGeometry(0.13, 0.13, 0.09, 12);
+    for (const x of [-0.46, 0.46]) {
+      for (const z of [-0.3, 0.3]) {
+        const wheel = new THREE.Mesh(wheelGeometry, dark);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.13, z);
+        stand.add(wheel);
+      }
+    }
+    const handleBar = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.92, 10), chrome);
+    handleBar.rotation.z = Math.PI / 2;
+    handleBar.position.set(0, 1.12, -0.58);
+    for (const x of [-0.4, 0.4]) {
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.55, 8), chrome);
+      post.position.set(x, 0.9, -0.48);
+      post.rotation.x = 0.32;
+      stand.add(post);
+    }
+    stand.add(handleBar);
+    stand.position.set(0, 0, 1.38);
+    this.mountAround(stand);
+  }
+
+  private createVendorSign(text: string): THREE.Mesh {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 160;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.fillStyle = '#fff7ed';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.strokeStyle = '#991b1b';
+      context.lineWidth = 14;
+      context.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+      context.direction = 'rtl';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillStyle = '#991b1b';
+      context.font = '900 92px Arial, sans-serif';
+      context.fillText(text, canvas.width / 2, canvas.height / 2 + 4);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.Mesh(
+      new THREE.PlaneGeometry(0.95, 0.3),
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+      }),
+    );
+  }
+
+  private mountAround(prop: THREE.Object3D): void {
     for (let index = 0; index < 4; index += 1) {
       const mount = new THREE.Group();
-      const copy = index === 0 ? cart : cart.clone();
+      const copy = index === 0 ? prop : prop.clone();
       mount.add(copy);
       mount.rotation.y = (index * Math.PI) / 2;
       mount.traverse((object) => {

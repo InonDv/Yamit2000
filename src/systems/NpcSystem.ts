@@ -24,9 +24,10 @@ export class NpcSystem {
   private giantInjectionEvent = false;
   private readonly pendingProximityCues: ProximityCue[] = [];
   private readonly lastProximityCueAt = new Map<string, number>();
-  private waterCustomerId: string | null = null;
-  private waterSaleTimer = 0;
-  private waterApproaching = false;
+  private readonly vendorSales = new Map<
+    string,
+    { customerId: string | null; saleTimer: number; approaching: boolean }
+  >();
   private readonly partyTables: PartyTable[] = [];
   private readonly hookahHoses: Array<{
     npc: Npc;
@@ -144,11 +145,29 @@ export class NpcSystem {
     );
     this.npcs.push(dekel);
     this.scene.add(dekel.group);
+    const hotDogVendor = new Npc(
+      regularCount + 3,
+      'walking',
+      new THREE.Vector3(10, 0, 12),
+      'סטפן',
+      1,
+      0xffffff,
+      {
+        faceTexture: './textures/hotdog-face.png',
+        hotDogStand: true,
+        pantsColor: 0x7f1d1d,
+        skinColor: 0x5c3a28,
+        shirtLabelScale: 2.2,
+        shirtLabelY: 1.18,
+      },
+    );
+    this.npcs.push(hotDogVendor);
+    this.scene.add(hotDogVendor.group);
   }
 
   update(delta: number, player: Player, audioUnlocked = false): void {
     if (audioUnlocked) this.updateProximityCue(player);
-    this.updateWaterSeller(delta);
+    this.updateVendors(delta);
     for (const table of this.partyTables) table.update(delta);
     this.updateHookahHoses();
     for (const npc of this.npcs) {
@@ -234,33 +253,40 @@ export class NpcSystem {
     }
   }
 
-  private updateWaterSeller(delta: number): void {
-    const seller = this.npcs.find((npc) => npc.proximityCue === 'water');
-    if (!seller || seller.reaction !== 'calm') return;
-    this.waterSaleTimer = Math.max(0, this.waterSaleTimer - delta);
-    const customer = this.npcs.find((npc) => npc.id === this.waterCustomerId);
-    if (customer && !seller.hasArrived()) {
-      this.waterApproaching = true;
-      seller.seek(customer.group.position);
-      return;
+  private updateVendors(delta: number): void {
+    for (const seller of this.npcs) {
+      if (!seller.isVendor || seller.reaction !== 'calm') continue;
+      let state = this.vendorSales.get(seller.id);
+      if (!state) {
+        state = { customerId: null, saleTimer: 0, approaching: false };
+        this.vendorSales.set(seller.id, state);
+      }
+      state.saleTimer = Math.max(0, state.saleTimer - delta);
+      const customer = this.npcs.find((npc) => npc.id === state.customerId);
+      if (customer && !seller.hasArrived()) {
+        state.approaching = true;
+        seller.seek(customer.group.position);
+        continue;
+      }
+      if (state.approaching && customer && seller.hasArrived()) {
+        state.approaching = false;
+        state.saleTimer = 1.8;
+      }
+      if (state.saleTimer > 0) continue;
+      const candidates = this.npcs.filter(
+        (npc) =>
+          npc.id !== seller.id &&
+          !npc.isVendor &&
+          npc.characterScale <= 1 &&
+          npc.reaction !== 'falling' &&
+          npc.reaction !== 'down',
+      );
+      if (candidates.length === 0) continue;
+      const next = candidates[THREE.MathUtils.randInt(0, candidates.length - 1)];
+      state.customerId = next.id;
+      state.approaching = true;
+      seller.seek(next.group.position);
     }
-    if (this.waterApproaching && customer && seller.hasArrived()) {
-      this.waterApproaching = false;
-      this.waterSaleTimer = 1.8;
-    }
-    if (this.waterSaleTimer > 0) return;
-    const candidates = this.npcs.filter(
-      (npc) =>
-        npc.id !== seller.id &&
-        npc.characterScale <= 1 &&
-        npc.reaction !== 'falling' &&
-        npc.reaction !== 'down',
-    );
-    if (candidates.length === 0) return;
-    const next = candidates[THREE.MathUtils.randInt(0, candidates.length - 1)];
-    this.waterCustomerId = next.id;
-    this.waterApproaching = true;
-    seller.seek(next.group.position);
   }
 
   private updateHookahHoses(): void {
@@ -373,6 +399,7 @@ export class NpcSystem {
       npc.mode !== 'walking' ||
       npc.isInformer ||
       npc.characterScale > 1 ||
+      npc.isVendor ||
       npc.proximityCue
     ) {
       return;
@@ -390,6 +417,7 @@ export class NpcSystem {
         candidate.id === npc.id ||
         candidate.isInformer ||
         candidate.characterScale > 1 ||
+        candidate.isVendor ||
         candidate.proximityCue ||
         candidate.reaction !== 'calm'
       ) {

@@ -17,6 +17,7 @@ interface HumanFigureOptions {
   faceTexture?: string;
   capColor?: number;
   shirtLabelScale?: number;
+  shirtLabelY?: number;
 }
 
 export class HumanFigure {
@@ -111,16 +112,17 @@ export class HumanFigure {
       this.group.add(chestLogo);
     }
 
+    const shirtLabelY = options.shirtLabelY ?? 1.48;
     if (options.frontText) {
       const frontLabel = this.createShirtLabel(options.frontText, options.shirtLabelScale);
-      frontLabel.position.set(0, 1.48, -0.28);
+      frontLabel.position.set(0, shirtLabelY, -0.28);
       frontLabel.rotation.y = Math.PI;
       this.group.add(frontLabel);
     }
 
     if (options.backText) {
       const backLabel = this.createShirtLabel(options.backText, options.shirtLabelScale);
-      backLabel.position.set(0, 1.48, 0.28);
+      backLabel.position.set(0, shirtLabelY, 0.28);
       this.group.add(backLabel);
     }
 
