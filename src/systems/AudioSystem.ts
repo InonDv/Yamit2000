@@ -7,7 +7,7 @@ export class AudioSystem {
   private readonly yerushalaimClip = this.createClip('./audio/yesrushalaim.mp3');
   private readonly shobidakClip = this.createClip('./audio/shobidak.mp3');
   private readonly morgenClip = this.createClip('./audio/morgen.mp3');
-  private readonly waterClip = this.createClip('./audio/water5.mp3');
+  private readonly waterClip = this.createClip('./audio/water2.mp3');
   private readonly dekelClip = this.createClip('./audio/dekelsong.mp3');
 
   constructor() {
