@@ -58,7 +58,7 @@ export class ScooterSystem {
     scooter.ridden = true;
     this.ridden = scooter;
     player.group.add(scooter.group);
-    scooter.group.position.set(0, 0, 0.12);
+    scooter.group.position.set(0, 0, 0.2);
     scooter.group.rotation.set(0, 0, 0);
     player.setRiding(true);
   }

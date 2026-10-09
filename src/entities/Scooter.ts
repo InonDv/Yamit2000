@@ -45,6 +45,7 @@ export class Scooter {
     );
     headlight.position.set(0, 0.28, -0.56);
     this.group.add(deck, stem, bar, leftGrip, rightGrip, frontWheel, rearWheel, headlight);
+    this.group.scale.setScalar(1.85);
     this.group.traverse((object) => {
       if (object instanceof THREE.Mesh) object.castShadow = true;
     });

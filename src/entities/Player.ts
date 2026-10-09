@@ -94,7 +94,7 @@ export class Player {
   setRiding(riding: boolean): void {
     this.riding = riding;
     if (this.isKnockedDown) return;
-    this.figure.group.position.y = riding ? 0.28 : 0;
+    this.figure.group.position.y = riding ? 0.42 : 0;
     if (!riding) this.figure.resetPose();
     else this.figure.setRidePose();
   }
