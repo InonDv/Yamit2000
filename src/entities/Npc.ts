@@ -371,10 +371,16 @@ export class Npc {
     }
     cart.add(basket, bottom, back, handleBar);
     cart.position.set(0, 0, 1.28);
-    cart.traverse((object) => {
-      if (object instanceof THREE.Mesh) object.castShadow = true;
-    });
-    this.group.add(cart);
+    for (let index = 0; index < 4; index += 1) {
+      const mount = new THREE.Group();
+      const copy = index === 0 ? cart : cart.clone();
+      mount.add(copy);
+      mount.rotation.y = (index * Math.PI) / 2;
+      mount.traverse((object) => {
+        if (object instanceof THREE.Mesh) object.castShadow = true;
+      });
+      this.group.add(mount);
+    }
   }
 
   private chooseTarget(): void {

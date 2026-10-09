@@ -90,8 +90,6 @@ export class NpcSystem {
       0x147a5a,
       {
         faceTexture: './textures/water-face.png',
-        baseballCap: true,
-        capColor: 0x1f2937,
         proximityCue: true,
         shoppingCart: true,
       },
