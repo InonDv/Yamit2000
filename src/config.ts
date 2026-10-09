@@ -13,6 +13,12 @@ export const CONFIG = {
     height: 2.4,
     start: { x: 0, z: 20 },
   },
+  scooter: {
+    count: 12,
+    pickupRange: 2.4,
+    rideSpeed: 16,
+    hitRadius: 1.45,
+  },
   camera: {
     distance: 8,
     height: 4.5,

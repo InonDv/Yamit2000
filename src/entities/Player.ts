@@ -22,6 +22,7 @@ export class Player {
   private walkPhase = 0;
   private punchTimer = 0;
   private injectionKnockdownTimer = 0;
+  private riding = false;
 
   constructor() {
     this.group.add(this.figure.group);
@@ -34,14 +35,15 @@ export class Player {
     } else {
       const move =
         Number(input.isHeld('KeyW')) - Number(input.isHeld('KeyS'));
+      const speed = this.riding ? CONFIG.scooter.rideSpeed : CONFIG.player.moveSpeed;
 
       if (move !== 0) {
-        this.group.position.addScaledVector(
-          this.facing,
-          move * CONFIG.player.moveSpeed * delta,
-        );
+        this.group.position.addScaledVector(this.facing, move * speed * delta);
         this.walkPhase += delta * 10;
-        this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
+        if (this.riding) this.figure.setRidePose();
+        else this.figure.setWalkCycle(this.walkPhase, 0.65 * move);
+      } else if (this.riding) {
+        this.figure.setRidePose();
       } else {
         this.figure.resetPose();
       }
@@ -87,6 +89,18 @@ export class Player {
 
   punch(): void {
     this.punchTimer = CONFIG.player.punchDuration;
+  }
+
+  setRiding(riding: boolean): void {
+    this.riding = riding;
+    if (this.isKnockedDown) return;
+    this.figure.group.position.y = riding ? 0.28 : 0;
+    if (!riding) this.figure.resetPose();
+    else this.figure.setRidePose();
+  }
+
+  get isRiding(): boolean {
+    return this.riding;
   }
 
   get isKnockedDown(): boolean {

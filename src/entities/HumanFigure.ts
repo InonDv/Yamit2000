@@ -143,6 +143,17 @@ export class HumanFigure {
 
   resetPose(): void {
     this.setWalkCycle(0, 0);
+    this.leftArm.rotation.z = 0;
+    this.rightArm.rotation.z = 0;
+  }
+
+  setRidePose(): void {
+    this.leftArm.rotation.x = -0.85;
+    this.rightArm.rotation.x = -0.85;
+    this.leftArm.rotation.z = 0.18;
+    this.rightArm.rotation.z = -0.18;
+    this.leftLeg.rotation.x = 0.12;
+    this.rightLeg.rotation.x = 0.62;
   }
 
   setPunchPose(amount: number): void {

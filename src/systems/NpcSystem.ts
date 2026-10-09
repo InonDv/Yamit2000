@@ -250,6 +250,20 @@ export class NpcSystem {
     return attack;
   }
 
+  runOverNearby(player: Player): PlayerAttackResult[] {
+    const hits: PlayerAttackResult[] = [];
+    const hitPoint = player.group.position
+      .clone()
+      .addScaledVector(player.facing, 0.85);
+    for (const npc of this.npcs) {
+      const hitRadius = CONFIG.scooter.hitRadius * npc.characterScale;
+      if (npc.group.position.distanceTo(hitPoint) > hitRadius) continue;
+      const attack = this.registerPlayerAttack(npc);
+      if (attack.reacted) hits.push(attack);
+    }
+    return hits;
+  }
+
   private registerAttack(
     npc: Npc,
     target: 'player' | string,
@@ -375,7 +389,12 @@ export class NpcSystem {
     );
   }
 
-  resolvePlayerPosition(position: THREE.Vector3, previous: THREE.Vector3): void {
+  resolvePlayerPosition(
+    position: THREE.Vector3,
+    previous: THREE.Vector3,
+    passThrough = false,
+  ): void {
+    if (passThrough) return;
     for (const npc of this.npcs) {
       if (
         npc.reaction === 'falling' ||
