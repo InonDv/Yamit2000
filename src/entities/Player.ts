@@ -22,7 +22,9 @@ export class Player {
   private walkPhase = 0;
   private punchTimer = 0;
   private injectionKnockdownTimer = 0;
+  private injectionLockTimer = 0;
   private riding = false;
+  private scooterMoving = false;
 
   constructor() {
     this.group.add(this.figure.group);
@@ -30,12 +32,17 @@ export class Player {
   }
 
   update(delta: number, input: InputController): void {
-    if (this.injectionKnockdownTimer > 0) {
+    this.scooterMoving = false;
+    if (this.injectionLockTimer > 0) {
+      this.injectionLockTimer = Math.max(0, this.injectionLockTimer - delta);
+      if (this.riding) this.figure.setRidePose();
+    } else if (this.injectionKnockdownTimer > 0) {
       this.updateInjectionKnockdown(delta);
     } else {
       const move =
         Number(input.isHeld('KeyW')) - Number(input.isHeld('KeyS'));
       const speed = this.riding ? CONFIG.scooter.rideSpeed : CONFIG.player.moveSpeed;
+      this.scooterMoving = this.riding && move !== 0;
 
       if (move !== 0) {
         this.group.position.addScaledVector(this.facing, move * speed * delta);
@@ -69,7 +76,7 @@ export class Player {
   }
 
   faceDirection(direction: THREE.Vector3): void {
-    if (this.isKnockedDown) return;
+    if (this.isImmobilized) return;
     direction.y = 0;
     if (direction.lengthSq() === 0) return;
     this.facing.copy(direction).normalize();
@@ -80,8 +87,16 @@ export class Player {
     this.hitFlash = 0.7;
   }
 
+  lockForInjection(): void {
+    this.registerHit();
+    this.injectionLockTimer = CONFIG.player.injectionLockDuration;
+    this.punchTimer = 0;
+    this.hitFlash = CONFIG.player.injectionLockDuration;
+  }
+
   registerInjection(): void {
     this.registerHit();
+    this.injectionLockTimer = 0;
     this.injectionKnockdownTimer = CONFIG.player.injectionKnockdownDuration;
     this.punchTimer = 0;
     this.figure.resetPose();
@@ -103,8 +118,16 @@ export class Player {
     return this.riding;
   }
 
+  get isScooterMoving(): boolean {
+    return this.scooterMoving;
+  }
+
   get isKnockedDown(): boolean {
     return this.injectionKnockdownTimer > 0;
+  }
+
+  get isImmobilized(): boolean {
+    return this.injectionLockTimer > 0 || this.injectionKnockdownTimer > 0;
   }
 
   get aimOrigin(): THREE.Vector3 {

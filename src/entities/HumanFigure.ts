@@ -12,6 +12,8 @@ interface HumanFigureOptions {
   backText?: string;
   knife?: boolean;
   syringe?: boolean;
+  cigarette?: boolean;
+  microphone?: boolean;
   faceTexture?: string;
   capColor?: number;
   shirtLabelScale?: number;
@@ -67,6 +69,7 @@ export class HumanFigure {
     );
     if (options.knife) this.addKnife();
     if (options.syringe) this.addSyringe();
+    if (options.microphone) this.addMicrophone();
     this.createLeg(
       this.rightLeg,
       0.24,
@@ -96,6 +99,10 @@ export class HumanFigure {
       nose.position.set(0, 2.18, -0.38);
       nose.rotation.x = -Math.PI / 2;
       this.group.add(nose);
+    }
+
+    if (options.cigarette !== false && !options.microphone) {
+      this.addCigarette(options.faceTexture ? 0.22 : 0);
     }
 
     if (options.nikeBranding) {
@@ -192,6 +199,16 @@ export class HumanFigure {
   setInjectionPose(amount: number): void {
     this.rightArm.rotation.x = amount * Math.PI * 0.58;
     this.rightArm.rotation.z = -amount * 0.18;
+  }
+
+  setSingWalkCycle(phase: number, amount = 0.5): void {
+    const swing = Math.sin(phase) * amount;
+    this.leftArm.rotation.x = swing;
+    this.leftArm.rotation.z = 0.08;
+    this.leftLeg.rotation.x = -swing;
+    this.rightLeg.rotation.x = swing;
+    const bob = Math.sin(phase * 0.65) * 0.06;
+    this.rightArm.rotation.set(1.92 + bob, 0.08, -0.34);
   }
 
   private createArm(
@@ -331,6 +348,93 @@ export class HumanFigure {
       logo.position.set(0, 2.55, -0.34);
       this.group.add(logo);
     }
+  }
+
+  private addCigarette(forward = 0): void {
+    const filterMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd97706,
+      roughness: 0.85,
+    });
+    const paperMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.55,
+    });
+    const ashMaterial = new THREE.MeshStandardMaterial({
+      color: 0x6b7280,
+      roughness: 0.95,
+    });
+    const emberMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf97316,
+      emissive: 0xea580c,
+      emissiveIntensity: 0.85,
+      roughness: 0.4,
+    });
+
+    const cigarette = new THREE.Group();
+    const filter = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 0.08, 10),
+      filterMaterial,
+    );
+    filter.position.y = 0.04;
+    const paper = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.026, 0.026, 0.2, 10),
+      paperMaterial,
+    );
+    paper.position.y = 0.18;
+    const ash = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.027, 0.022, 0.032, 8),
+      ashMaterial,
+    );
+    ash.position.y = 0.296;
+    const ember = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), emberMaterial);
+    ember.position.y = 0.318;
+    cigarette.add(filter, paper, ash, ember);
+
+    cigarette.position.set(0.08, 2.05, -0.34 - forward);
+    cigarette.rotation.x = -Math.PI / 2 - 0.12;
+    cigarette.rotation.z = 0.28;
+    cigarette.traverse((object) => {
+      if (object instanceof THREE.Mesh) object.castShadow = true;
+    });
+    this.group.add(cigarette);
+  }
+
+  private addMicrophone(): void {
+    const handleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x111827,
+      roughness: 0.55,
+    });
+    const grilleMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd1d5db,
+      metalness: 0.75,
+      roughness: 0.28,
+    });
+    const ringMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe5e7eb,
+      metalness: 0.85,
+      roughness: 0.22,
+    });
+
+    const microphone = new THREE.Group();
+    const handle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.032, 0.038, 0.28, 10),
+      handleMaterial,
+    );
+    handle.position.y = -0.12;
+    const ring = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 0.03, 10),
+      ringMaterial,
+    );
+    ring.position.y = 0.03;
+    const grille = new THREE.Mesh(new THREE.SphereGeometry(0.095, 12, 10), grilleMaterial);
+    grille.position.y = 0.12;
+    microphone.add(handle, ring, grille);
+    microphone.position.set(0.04, -1.0, -0.12);
+    microphone.rotation.set(1.05, 0.12, 0.2);
+    microphone.traverse((object) => {
+      if (object instanceof THREE.Mesh) object.castShadow = true;
+    });
+    this.rightArm.add(microphone);
   }
 
   private addKnife(): void {

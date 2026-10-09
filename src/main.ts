@@ -140,7 +140,7 @@ function animate(): void {
     97,
   )}%`;
 
-  if (input.consumePressed('Space') && !player.isKnockedDown) {
+  if (input.consumePressed('Space') && !player.isImmobilized) {
     const nearScooter =
       !chairSystem.playerChair &&
       (player.isRiding ||
@@ -181,10 +181,13 @@ function animate(): void {
   }
 
   npcSystem.update(delta, player);
-  if (npcSystem.consumeProximityCue()) {
-    audio.playWater();
+  let proximityCue = npcSystem.consumeProximityCue();
+  while (proximityCue) {
+    if (proximityCue === 'water') audio.playWater();
+    if (proximityCue === 'dekel') audio.playDekel();
+    proximityCue = npcSystem.consumeProximityCue();
   }
-  if (player.isRiding) {
+  if (player.isRiding && player.isScooterMoving) {
     for (const hit of npcSystem.runOverNearby(player)) {
       if (hit.giantHit) {
         audio.playShobidak();

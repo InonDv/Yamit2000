@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config';
 import type { Chair } from '../entities/Chair';
-import { Npc, type NpcMode } from '../entities/Npc';
+import { Npc, type NpcMode, type ProximityCue } from '../entities/Npc';
 import { PARTY_TABLES, PartyTable } from '../entities/PartyTable';
 import type { Player } from '../entities/Player';
 import type { ChairSystem } from './ChairSystem';
@@ -22,9 +22,8 @@ export class NpcSystem {
   private readonly ambientTimers = new Map<string, number>();
   private readonly deliveredInjections = new Set<string>();
   private giantInjectionEvent = false;
-  private proximityCueReady = false;
-  private lastProximityCueAt = 0;
-  private wasNearProximityNpc = false;
+  private readonly pendingProximityCues: ProximityCue[] = [];
+  private readonly lastProximityCueAt = new Map<string, number>();
   private waterCustomerId: string | null = null;
   private waterSaleTimer = 0;
   private waterApproaching = false;
@@ -119,15 +118,32 @@ export class NpcSystem {
       new THREE.Vector3(-10, 0, 12),
       'מים ב5',
       1,
-      0x147a5a,
+      0xffffff,
       {
         faceTexture: './textures/water-face.png',
-        proximityCue: true,
+        proximityCue: 'water',
         shoppingCart: true,
+        pantsColor: 0x1e293b,
       },
     );
     this.npcs.push(portraitNpc);
     this.scene.add(portraitNpc.group);
+    const dekel = new Npc(
+      regularCount + 2,
+      'walking',
+      new THREE.Vector3(3, 0, 14),
+      'דקל וקנין',
+      1,
+      0xffffff,
+      {
+        faceTexture: './textures/dekel-face.png',
+        proximityCue: 'dekel',
+        microphone: true,
+        pantsColor: 0x111827,
+      },
+    );
+    this.npcs.push(dekel);
+    this.scene.add(dekel.group);
   }
 
   update(delta: number, player: Player): void {
@@ -207,14 +223,12 @@ export class NpcSystem {
     return true;
   }
 
-  consumeProximityCue(): boolean {
-    if (!this.proximityCueReady) return false;
-    this.proximityCueReady = false;
-    return true;
+  consumeProximityCue(): ProximityCue | null {
+    return this.pendingProximityCues.shift() ?? null;
   }
 
   private updateWaterSeller(delta: number): void {
-    const seller = this.npcs.find((npc) => npc.proximityCue);
+    const seller = this.npcs.find((npc) => npc.proximityCue === 'water');
     if (!seller || seller.reaction !== 'calm') return;
     this.waterSaleTimer = Math.max(0, this.waterSaleTimer - delta);
     const customer = this.npcs.find((npc) => npc.id === this.waterCustomerId);
@@ -269,19 +283,19 @@ export class NpcSystem {
   }
 
   private updateProximityCue(player: Player): void {
-    const portraitNpc = this.npcs.find((npc) => npc.proximityCue);
-    if (!portraitNpc) return;
-    const inRange =
-      portraitNpc.group.position.distanceTo(player.group.position) <=
-      CONFIG.npc.proximityCueRange;
-    if (inRange && !this.wasNearProximityNpc) {
-      const elapsed = (performance.now() - this.lastProximityCueAt) / 1000;
-      if (this.lastProximityCueAt === 0 || elapsed >= CONFIG.npc.proximityCueCooldown) {
-        this.lastProximityCueAt = performance.now();
-        this.proximityCueReady = true;
+    const now = performance.now();
+    for (const npc of this.npcs) {
+      if (!npc.proximityCue) continue;
+      const inRange =
+        npc.group.position.distanceTo(player.group.position) <=
+        CONFIG.npc.proximityCueRange;
+      if (!inRange) continue;
+      const lastAt = this.lastProximityCueAt.get(npc.id) ?? 0;
+      if (lastAt === 0 || (now - lastAt) / 1000 >= CONFIG.npc.proximityCueCooldown) {
+        this.lastProximityCueAt.set(npc.id, now);
+        this.pendingProximityCues.push(npc.proximityCue);
       }
     }
-    this.wasNearProximityNpc = inRange;
   }
 
   punchNearest(player: Player): PlayerAttackResult {
@@ -311,6 +325,7 @@ export class NpcSystem {
   }
 
   runOverNearby(player: Player): PlayerAttackResult[] {
+    if (!player.isScooterMoving || player.isImmobilized) return [];
     const hits: PlayerAttackResult[] = [];
     const hitPoint = player.group.position
       .clone()
@@ -403,9 +418,15 @@ export class NpcSystem {
     if (npc.reaction === 'chasing-player') {
       npc.face(player.group.position);
       const distance = npc.group.position.distanceTo(player.group.position);
-      if (distance <= 2.25) {
+      if (
+        distance <= CONFIG.npc.giantInjectRange &&
+        !player.isImmobilized &&
+        !player.isScooterMoving
+      ) {
         npc.reaction = 'injecting';
-        npc.reactionTimer = 1;
+        npc.reactionTimer = CONFIG.player.injectionLockDuration;
+        player.lockForInjection();
+        this.giantInjectionEvent = true;
       } else {
         npc.chase(player.group.position, delta);
       }
@@ -413,19 +434,17 @@ export class NpcSystem {
     }
 
     if (npc.reaction === 'injecting') {
+      const duration = CONFIG.player.injectionLockDuration;
       npc.face(player.group.position);
       npc.reactionTimer = Math.max(0, npc.reactionTimer - delta);
-      const progress = 1 - npc.reactionTimer;
+      const progress = 1 - npc.reactionTimer / duration;
       npc.setInjectionPose(Math.sin(progress * Math.PI));
-      if (progress >= 0.45 && !this.deliveredInjections.has(npc.id)) {
-        this.deliveredInjections.add(npc.id);
-        player.registerInjection();
-        this.giantInjectionEvent = true;
-      }
       if (npc.reactionTimer <= 0) {
         npc.setInjectionPose(0);
         npc.reaction = 'calm';
+        this.deliveredInjections.delete(npc.id);
         this.ambientTimers.delete(npc.id);
+        player.registerInjection();
       }
       return true;
     }

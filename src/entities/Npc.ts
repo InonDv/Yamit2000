@@ -5,12 +5,15 @@ import { HumanFigure } from './HumanFigure';
 const NPC_NAMES = ['נהוראי', 'אלירן', 'אבי', 'יוסי', 'נתי'] as const;
 
 export type NpcMode = 'walking' | 'sunbathing' | 'partying';
+export type ProximityCue = 'water' | 'dekel';
 export type NpcExtras = {
   faceTexture?: string;
   baseballCap?: boolean;
   capColor?: number;
-  proximityCue?: boolean;
+  proximityCue?: ProximityCue;
   shoppingCart?: boolean;
+  microphone?: boolean;
+  pantsColor?: number;
   partyHabit?: 'drink' | 'smoke';
   facingYaw?: number;
 };
@@ -29,7 +32,7 @@ export class Npc {
   readonly id: string;
   readonly displayName: string;
   readonly isInformer: boolean;
-  readonly proximityCue: boolean;
+  readonly proximityCue: ProximityCue | null;
   reaction: NpcReaction = 'calm';
   reactionTimer = 0;
   hitCooldown = 0;
@@ -42,6 +45,7 @@ export class Npc {
   private permanentKnockdown = false;
   private walkPhase = Math.random() * Math.PI * 2;
   private readonly sellsWater: boolean;
+  private readonly singing: boolean;
   private readonly partyHabit: 'drink' | 'smoke' | null;
 
   constructor(
@@ -54,8 +58,9 @@ export class Npc {
     extras: NpcExtras = {},
   ) {
     this.id = `npc-${id}`;
-    this.proximityCue = extras.proximityCue ?? false;
-    this.sellsWater = extras.shoppingCart ?? extras.proximityCue ?? false;
+    this.proximityCue = extras.proximityCue ?? null;
+    this.sellsWater = extras.shoppingCart ?? false;
+    this.singing = extras.microphone ?? false;
     this.partyHabit = extras.partyHabit ?? null;
     this.displayName =
       assignedName ??
@@ -71,7 +76,9 @@ export class Npc {
           : mode === 'partying'
             ? 0xdb2777
             : COLORS.npcSunbather),
-      pantsColor: clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
+      pantsColor:
+        extras.pantsColor ?? clothingColor ?? (id % 2 === 0 ? 0x0f766e : 0x334155),
+      microphone: extras.microphone,
       skinColor: extras.faceTexture
         ? 0xe0b089
         : [0xf0b98b, 0x8d5524, 0xc68642, 0xffdbac][id % 4],
@@ -86,6 +93,7 @@ export class Npc {
     this.bodyMaterial = this.figure.shirtMaterial;
     this.group.add(this.figure.group);
     this.group.scale.setScalar(characterScale);
+    if (this.singing) this.figure.setSingWalkCycle(this.walkPhase, 0);
     if (this.sellsWater) this.addShoppingCart();
 
     if (mode === 'sunbathing') {
@@ -147,7 +155,8 @@ export class Npc {
     this.group.position.addScaledVector(direction, CONFIG.npc.walkSpeed * delta);
     this.group.rotation.y = Math.atan2(-direction.x, -direction.z);
     this.walkPhase += delta * 7;
-    this.figure.setWalkCycle(this.walkPhase, 0.5);
+    if (this.singing) this.figure.setSingWalkCycle(this.walkPhase, 0.5);
+    else this.figure.setWalkCycle(this.walkPhase, 0.5);
   }
 
   registerHit(permanentKnockdown = false): boolean {

@@ -8,13 +8,14 @@ export const CONFIG = {
     punchRange: 2.15,
     punchDuration: 0.32,
     injectionKnockdownDuration: 5,
+    injectionLockDuration: 3,
     injectionRollCount: 4,
     radius: 0.7,
     height: 2.4,
     start: { x: 0, z: 20 },
   },
   scooter: {
-    count: 12,
+    count: 6,
     pickupRange: 3.2,
     rideSpeed: 16,
     hitRadius: 2.1,
@@ -51,6 +52,7 @@ export const CONFIG = {
     ambientThrowMaxDelay: 7,
     proximityCueRange: 7,
     proximityCueCooldown: 60,
+    giantInjectRange: 3.2,
   },
 } as const;
 

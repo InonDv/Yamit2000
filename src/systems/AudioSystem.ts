@@ -8,6 +8,7 @@ export class AudioSystem {
   private readonly shobidakClip = this.createClip('./audio/shobidak.mp3');
   private readonly morgenClip = this.createClip('./audio/morgen.mp3');
   private readonly waterClip = this.createClip('./audio/water5.mp3');
+  private readonly dekelClip = this.createClip('./audio/dekelsong.mp3');
 
   constructor() {
     window.addEventListener('pointerdown', this.unlock, { once: true });
@@ -109,6 +110,10 @@ export class AudioSystem {
     this.playClip(this.waterClip);
   }
 
+  playDekel(): void {
+    this.playClip(this.dekelClip);
+  }
+
   dispose(): void {
     window.removeEventListener('pointerdown', this.unlock);
     window.removeEventListener('keydown', this.unlock);
@@ -119,6 +124,7 @@ export class AudioSystem {
     this.shobidakClip.pause();
     this.morgenClip.pause();
     this.waterClip.pause();
+    this.dekelClip.pause();
     void this.context?.close();
   }
 
@@ -162,6 +168,7 @@ export class AudioSystem {
       this.shobidakClip,
       this.morgenClip,
       this.waterClip,
+      this.dekelClip,
     ]) {
       const wasMuted = clip.muted;
       clip.muted = true;
