@@ -106,12 +106,16 @@ export class AudioSystem {
     this.playClip(this.morgenClip);
   }
 
-  playWater(): void {
-    this.playClip(this.waterClip);
+  get isUnlocked(): boolean {
+    return this.mediaPrimed;
   }
 
-  playDekel(): void {
-    this.playClip(this.dekelClip);
+  playWater(): boolean {
+    return this.playClip(this.waterClip);
+  }
+
+  playDekel(): boolean {
+    return this.playClip(this.dekelClip);
   }
 
   dispose(): void {
@@ -150,11 +154,13 @@ export class AudioSystem {
     return clip;
   }
 
-  private playClip(clip: HTMLAudioElement): void {
+  private playClip(clip: HTMLAudioElement): boolean {
+    if (!this.mediaPrimed) return false;
     clip.currentTime = 0;
     void clip.play().catch(() => {
       // Browsers may block sound until the first touch, click, or key press.
     });
+    return true;
   }
 
   private primeMediaClips(): void {

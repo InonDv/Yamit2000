@@ -180,11 +180,16 @@ function animate(): void {
     }
   }
 
-  npcSystem.update(delta, player);
+  npcSystem.update(delta, player, audio.isUnlocked);
   let proximityCue = npcSystem.consumeProximityCue();
   while (proximityCue) {
-    if (proximityCue === 'water') audio.playWater();
-    if (proximityCue === 'dekel') audio.playDekel();
+    const played =
+      proximityCue === 'water'
+        ? audio.playWater()
+        : proximityCue === 'dekel'
+          ? audio.playDekel()
+          : false;
+    if (played) npcSystem.confirmProximityCue(proximityCue);
     proximityCue = npcSystem.consumeProximityCue();
   }
   if (player.isRiding && player.isScooterMoving) {

@@ -146,8 +146,8 @@ export class NpcSystem {
     this.scene.add(dekel.group);
   }
 
-  update(delta: number, player: Player): void {
-    this.updateProximityCue(player);
+  update(delta: number, player: Player, audioUnlocked = false): void {
+    if (audioUnlocked) this.updateProximityCue(player);
     this.updateWaterSeller(delta);
     for (const table of this.partyTables) table.update(delta);
     this.updateHookahHoses();
@@ -227,6 +227,13 @@ export class NpcSystem {
     return this.pendingProximityCues.shift() ?? null;
   }
 
+  confirmProximityCue(cue: ProximityCue): void {
+    const now = performance.now();
+    for (const npc of this.npcs) {
+      if (npc.proximityCue === cue) this.lastProximityCueAt.set(npc.id, now);
+    }
+  }
+
   private updateWaterSeller(delta: number): void {
     const seller = this.npcs.find((npc) => npc.proximityCue === 'water');
     if (!seller || seller.reaction !== 'calm') return;
@@ -290,9 +297,9 @@ export class NpcSystem {
         npc.group.position.distanceTo(player.group.position) <=
         CONFIG.npc.proximityCueRange;
       if (!inRange) continue;
+      if (this.pendingProximityCues.includes(npc.proximityCue)) continue;
       const lastAt = this.lastProximityCueAt.get(npc.id) ?? 0;
       if (lastAt === 0 || (now - lastAt) / 1000 >= CONFIG.npc.proximityCueCooldown) {
-        this.lastProximityCueAt.set(npc.id, now);
         this.pendingProximityCues.push(npc.proximityCue);
       }
     }
