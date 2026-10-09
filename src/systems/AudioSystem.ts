@@ -8,7 +8,7 @@ export class AudioSystem {
   private readonly shobidakClip = this.createClip('./audio/shobidak.mp3');
   private readonly morgenClip = this.createClip('./audio/morgen.mp3');
   private readonly waterClip = this.createClip('./audio/water2.mp3');
-  private readonly dekelClip = this.createClip('./audio/dekelsong.mp3');
+  private readonly dekelClip = this.createClip('./audio/dekelnew.mp3');
 
   constructor() {
     window.addEventListener('pointerdown', this.unlock, { once: true });
